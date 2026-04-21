@@ -1,0 +1,15 @@
+type: object
+required: [accessToken, refreshToken]
+properties:
+  accessToken:
+    type: string
+    example: "eyJhbGciOiJIUzI1NiIs..."
+  refreshToken:
+    type: string
+    example: "eyJhbGciOiJIUzI1NiIs..."
+  oldRefreshTokenRevoked:
+    type: boolean
+    description: "Старый refresh token был отозван"
+  expiresIn:
+    type: integer
+    example: 3600

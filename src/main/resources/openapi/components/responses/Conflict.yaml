@@ -1,0 +1,9 @@
+description: Конфликт данных
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "CONFLICT"
+        message: "Конфликт данных"

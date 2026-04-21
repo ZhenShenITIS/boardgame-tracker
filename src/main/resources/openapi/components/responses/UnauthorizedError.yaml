@@ -1,0 +1,9 @@
+description: Не авторизован
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "UNAUTHORIZED"
+        message: "Требуется аутентификация"

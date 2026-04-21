@@ -1,0 +1,15 @@
+type: object
+required: [accessToken, refreshToken, user]
+properties:
+  accessToken:
+    type: string
+    example: "eyJhbGciOiJIUzI1NiIs..."
+  refreshToken:
+    type: string
+    example: "eyJhbGciOiJIUzI1NiIs..."
+  expiresIn:
+    type: integer
+    description: "Время жизни access token в секундах"
+    example: 3600
+  user:
+    $ref: './User.yaml'

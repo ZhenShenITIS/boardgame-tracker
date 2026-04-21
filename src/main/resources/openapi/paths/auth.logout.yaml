@@ -1,0 +1,15 @@
+post:
+  summary: Выход из системы
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/LogoutRequest.yaml'
+  responses:
+    '200':
+      description: Успешный выход из системы
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    '429':
+      $ref: '../components/responses/TooManyRequests.yaml'

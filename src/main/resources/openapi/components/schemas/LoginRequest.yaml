@@ -1,0 +1,7 @@
+type: object
+required: [email, password]
+properties:
+  email:
+    $ref: '../fields/Email.yaml'
+  password:
+    $ref: '../fields/Password.yaml'

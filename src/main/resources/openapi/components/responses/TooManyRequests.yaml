@@ -1,0 +1,9 @@
+description: Слишком много запросов
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "TOO_MANY_REQUESTS"
+        message: "Попробуйте снова позже"

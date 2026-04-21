@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Boardgames tracker API
+  description: API для проекта Boardgames tracker
+  version: 1.0.0
+
+security:
+  - BearerAuth: []
+paths:
+  /auth/login:
+    $ref: './paths/auth.login.yaml'
+  /auth/refresh:
+    $ref: './paths/auth.refresh.yaml'
+  /auth/logout:
+    $ref: './paths/auth.logout.yaml'
+  /auth/register:
+    $ref: './paths/auth.register.yaml'
+  /auth/profile:
+    $ref: './paths/auth.profile.yaml'
+  /auth/change-password:
+    $ref: './paths/auth.change-password.yaml'
+
+
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: './components/securitySchemes/BearerAuth.yaml'
+
+

@@ -1,0 +1,33 @@
+get:
+  summary: Получение информации об аутентифицированном пользователе
+  responses:
+    '200':
+      description: Успешно
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/User.yaml'
+    '401':
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    '429':
+      $ref: '../components/responses/TooManyRequests.yaml'
+
+patch:
+  summary: Смена имени пользователя
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/ChangeNameRequest.yaml'
+  responses:
+    200:
+      description: Успешная смена имени
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/User.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    429:
+      $ref: '../components/responses/TooManyRequests.yaml'

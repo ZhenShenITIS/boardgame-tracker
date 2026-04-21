@@ -1,0 +1,22 @@
+type: object
+required: [id, email, name]
+properties:
+  id:
+    type: integer
+    readOnly: true
+    example: 1
+  email:
+    $ref: '../fields/Email.yaml'
+  name:
+    $ref: '../fields/Name.yaml'
+  roles:
+    type: array
+    items:
+      type: string
+    example: [ "USER" ]
+  createdAt:
+    type: string
+    format: date-time
+    readOnly: true
+    example: "2024-01-15T10:30:00Z"
+

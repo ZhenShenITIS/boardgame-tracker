@@ -1,0 +1,9 @@
+description: Невалидные данные
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "UNPROCESSABLE_ENTITY"
+        message: "Неверный формат данных"

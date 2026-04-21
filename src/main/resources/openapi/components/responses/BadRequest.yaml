@@ -1,0 +1,9 @@
+description: Плохой запрос
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "BAD_REQUEST"
+        message: "Неправильный запрос со стороны клиента"

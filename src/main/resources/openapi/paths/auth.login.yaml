@@ -1,0 +1,23 @@
+post:
+  summary: Вход в систему
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/LoginRequest.yaml'
+        example:
+          email: "user@itis.com"
+          password: "password123"
+  responses:
+    '200':
+      description: Успешная аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/AuthResponse.yaml'
+    '401':
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    '429':
+      $ref: '../components/responses/TooManyRequests.yaml'

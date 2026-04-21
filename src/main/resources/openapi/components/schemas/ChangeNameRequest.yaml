@@ -1,0 +1,5 @@
+type: object
+required: [name]
+properties:
+  name:
+    $ref: '../fields/Name.yaml'

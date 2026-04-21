@@ -1,0 +1,24 @@
+post:
+  summary: Регистрация
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/RegisterRequest.yaml'
+  responses:
+    '201':
+      description: Успешная регистрация
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/AuthResponse.yaml'
+    '400':
+      $ref: '../components/responses/BadRequest.yaml'
+    '409':
+      $ref: '../components/responses/Conflict.yaml'
+    '422':
+      $ref: '../components/responses/UnprocessableEntity.yaml'
+    '429':
+      $ref: '../components/responses/TooManyRequests.yaml'

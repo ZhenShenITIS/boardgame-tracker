@@ -1,0 +1,20 @@
+post:
+  summary: Обновление токенов
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/RefreshRequest.yaml'
+  responses:
+    '200':
+      description: Успешное обновление токенов
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/RefreshResponse.yaml'
+    '401':
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    '429':
+      $ref: '../components/responses/TooManyRequests.yaml'
