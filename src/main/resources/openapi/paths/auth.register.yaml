@@ -1,5 +1,6 @@
 post:
   summary: Регистрация
+  tags: [ auth ]
   security: []
   requestBody:
     required: true

@@ -1,5 +1,6 @@
 get:
   summary: Получение информации об аутентифицированном пользователе
+  tags: [ auth ]
   responses:
     '200':
       description: Успешно
@@ -14,6 +15,7 @@ get:
 
 patch:
   summary: Смена имени пользователя
+  tags: [ auth ]
   requestBody:
     required: true
     content:

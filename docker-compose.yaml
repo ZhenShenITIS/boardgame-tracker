@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:17
+    container_name: boardgame_postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: boardgame_tomcat
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+volumes:
+  pgdata:

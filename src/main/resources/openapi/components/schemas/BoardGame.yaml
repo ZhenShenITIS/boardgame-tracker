@@ -1,0 +1,77 @@
+type: object
+required: [id, type, originalName, displayName, isCustom, tags]
+properties:
+  id:
+    type: integer
+    format: int64
+    readOnly: true
+    example: 1
+  bggId:
+    type: integer
+    format: int64
+    nullable: true
+    example: 174430
+  type:
+    type: string
+    default: BOARDGAME
+    example: BOARDGAME
+  originalName:
+    type: string
+    maxLength: 500
+    example: "Gloomhaven"
+  displayName:
+    type: string
+    maxLength: 500
+    example: "Мрачная гавань"
+  complexity:
+    type: number
+    format: double
+    nullable: true
+    example: 3.91
+  minPlayers:
+    type: integer
+    nullable: true
+    example: 1
+  maxPlayers:
+    type: integer
+    nullable: true
+    example: 4
+  playingTime:
+    type: integer
+    nullable: true
+    example: 120
+  minPlayTime:
+    type: integer
+    nullable: true
+    example: 60
+  maxPlayTime:
+    type: integer
+    nullable: true
+    example: 120
+  minAge:
+    type: integer
+    nullable: true
+    example: 14
+  yearPublished:
+    type: integer
+    nullable: true
+    example: 2017
+  imageUrl:
+    type: string
+    maxLength: 500
+    nullable: true
+    example: "https://boardgame-tracker.com/image.jpg"
+  previewUrl:
+    type: string
+    maxLength: 500
+    nullable: true
+    example: "https://boardgame-tracker.com/preview.jpg"
+  isCustom:
+    type: boolean
+    default: false
+    example: false
+  tags:
+    type: array
+    items:
+      $ref: "./Tag.yaml"
+    example: []

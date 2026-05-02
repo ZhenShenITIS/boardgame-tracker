@@ -1,0 +1,9 @@
+description: Ресурс не найден
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "NOT_FOUND"
+        message: "Ресурс не найден"

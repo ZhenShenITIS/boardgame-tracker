@@ -1,0 +1,60 @@
+get:
+  summary: Получить информацию о настольной игре
+  tags: [ boardgames ]
+  parameters:
+    - $ref: "../components/parameters/intIdInPath.yaml"
+  responses:
+    200:
+      description: Информация о настольной игре
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/BoardGame.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'
+
+
+put:
+  summary: Обновить информацию о настольной игре
+  tags: [ boardgames ]
+  parameters:
+    - $ref: "../components/parameters/intIdInPath.yaml"
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UpdateBoardGameRequest.yaml'
+  responses:
+    200:
+      description: Успешное обновление настольной игры
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/BoardGame.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'
+
+delete:
+  summary: Удалить информацию о настольной игре
+  tags: [ boardgames ]
+  parameters:
+    - $ref: "../components/parameters/intIdInPath.yaml"
+  responses:
+    204:
+      description: Успешное удаление настольной игры
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'

@@ -1,5 +1,6 @@
 post:
   summary: Вход в систему
+  tags: [ auth ]
   security: []
   requestBody:
     required: true
