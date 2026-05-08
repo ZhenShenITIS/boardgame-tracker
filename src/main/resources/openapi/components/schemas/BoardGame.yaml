@@ -1,0 +1,37 @@
+type: object
+required: [id, type, originalName, displayName, isCustom, tags]
+properties:
+  id:
+    $ref: "../fields/BoardGameId.yaml"
+  bggId:
+    $ref: "../fields/BggId.yaml"
+  type:
+    $ref: "../fields/BoardGameType.yaml"
+  originalName:
+    $ref: "../fields/OriginalName.yaml"
+  displayName:
+    $ref: "../fields/DisplayName.yaml"
+  complexity:
+    $ref: "../fields/Complexity.yaml"
+  minPlayers:
+    $ref: "../fields/MinPlayers.yaml"
+  maxPlayers:
+    $ref: "../fields/MaxPlayers.yaml"
+  playingTime:
+    $ref: "../fields/PlayingTime.yaml"
+  minPlayTime:
+    $ref: "../fields/MinPlayTime.yaml"
+  maxPlayTime:
+    $ref: "../fields/MaxPlayTime.yaml"
+  minAge:
+    $ref: "../fields/MinAge.yaml"
+  yearPublished:
+    $ref: "../fields/YearPublished.yaml"
+  imageUrl:
+    $ref: "../fields/ImageUrl.yaml"
+  previewUrl:
+    $ref: "../fields/PreviewUrl.yaml"
+  isCustom:
+    $ref: "../fields/IsCustom.yaml"
+  tags:
+    $ref: "../fields/Tags.yaml"

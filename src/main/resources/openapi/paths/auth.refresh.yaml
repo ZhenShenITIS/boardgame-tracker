@@ -1,5 +1,6 @@
 post:
   summary: Обновление токенов
+  tags: [ auth ]
   security: []
   requestBody:
     required: true

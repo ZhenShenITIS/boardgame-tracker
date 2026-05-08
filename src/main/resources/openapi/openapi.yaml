@@ -19,6 +19,10 @@ paths:
     $ref: './paths/auth.profile.yaml'
   /auth/change-password:
     $ref: './paths/auth.change-password.yaml'
+  /boardgames:
+    $ref: './paths/boardgames.yaml'
+  /boardgames/{id}:
+    $ref: './paths/boardgames.id.yaml'
 
 
 

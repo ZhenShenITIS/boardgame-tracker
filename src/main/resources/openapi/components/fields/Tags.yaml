@@ -1,0 +1,4 @@
+type: array
+items:
+  $ref: "../schemas/Tag.yaml"
+example: []

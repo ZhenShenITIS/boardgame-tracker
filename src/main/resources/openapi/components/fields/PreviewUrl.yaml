@@ -1,0 +1,4 @@
+type: string
+maxLength: 500
+nullable: true
+example: "https://boardgame-tracker.com/preview.jpg"

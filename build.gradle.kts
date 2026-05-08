@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.25"
     id("org.springframework.boot") version "3.5.13"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.openapi.generator") version "7.10.0"
 }
 
 group = "itis"
@@ -31,6 +32,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("io.swagger.core.v3:swagger-annotations:2.2.25")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
@@ -59,4 +62,49 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+val openApiGeneratedDir = layout.buildDirectory.dir("generated/openapi").get().asFile.absolutePath
+
+
+tasks.openApiGenerate {
+    generatorName.set("kotlin-spring")
+    inputSpec.set("$rootDir/src/main/resources/openapi/openapi.yaml")
+    outputDir.set(openApiGeneratedDir)
+
+    apiPackage.set("itis.boardgametracker.api")
+    modelPackage.set("itis.boardgametracker.api.dto")
+
+    configOptions.set(mapOf(
+        "interfaceOnly" to "true",
+        "useSpringBoot3" to "true",
+        "skipDefaultInterface" to "true",
+        "useJakartaEe" to "true",
+        "useTags" to "true",
+        "openApiNullable" to "false",
+        "dateLibrary" to "java8",
+        "useResponseEntity" to "true",
+        "useBeanValidation" to "true",
+        "enumPropertyNaming" to "UPPERCASE",
+        "exceptionHandler" to "false"
+    ))
+
+
+    additionalProperties.set(mapOf(
+        "generateApiTests" to "false",
+        "generateModelTests" to "false",
+        "generateApiDocumentation" to "false",
+        "generateModelDocumentation" to "false"
+    ))
+}
+
+
+sourceSets {
+    main {
+        kotlin.srcDir("$openApiGeneratedDir/src/main/kotlin")
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    dependsOn(tasks.openApiGenerate)
 }

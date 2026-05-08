@@ -1,0 +1,59 @@
+get:
+  summary: Получить настольные игры
+  tags: [ boardgames ]
+  parameters:
+    - name: query
+      in: query
+      description: Поисковый запрос игры, может быть пуст для общего показа игр
+      schema:
+        type: string
+    - name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        default: 25
+        maximum: 100
+        minimum: 10
+        # TODO: в будущем можно добавить сортировку по разным полям
+  responses:
+    200:
+      description: Список настольных игр
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/BoardGameList.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+
+post:
+  summary: Создать настольную игру
+  tags: [ boardgames ]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        # TODO: Возможность напрямую создавать настольные игры должна быть только у админа.
+        #  Пользователь создаёт настолки без возможности указать bggId и isCustom.
+        #  При вызове данного метода автоматически создается кастомная настолка
+        #  с ID юзера, вызвавшего метод
+        schema:
+          $ref: '../components/schemas/CreateBoardGameRequest.yaml'
+  responses:
+    201:
+      description: Успешное создание настольной игры
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/BoardGame.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'

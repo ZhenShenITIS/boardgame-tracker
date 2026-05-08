@@ -1,0 +1,4 @@
+type: number
+format: double
+nullable: true
+example: 3.91
