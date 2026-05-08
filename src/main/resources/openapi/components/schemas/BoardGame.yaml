@@ -2,76 +2,36 @@ type: object
 required: [id, type, originalName, displayName, isCustom, tags]
 properties:
   id:
-    type: integer
-    format: int64
-    readOnly: true
-    example: 1
+    $ref: "../fields/BoardGameId.yaml"
   bggId:
-    type: integer
-    format: int64
-    nullable: true
-    example: 174430
+    $ref: "../fields/BggId.yaml"
   type:
-    type: string
-    default: BOARDGAME
-    example: BOARDGAME
+    $ref: "../fields/BoardGameType.yaml"
   originalName:
-    type: string
-    maxLength: 500
-    example: "Gloomhaven"
+    $ref: "../fields/OriginalName.yaml"
   displayName:
-    type: string
-    maxLength: 500
-    example: "Мрачная гавань"
+    $ref: "../fields/DisplayName.yaml"
   complexity:
-    type: number
-    format: double
-    nullable: true
-    example: 3.91
+    $ref: "../fields/Complexity.yaml"
   minPlayers:
-    type: integer
-    nullable: true
-    example: 1
+    $ref: "../fields/MinPlayers.yaml"
   maxPlayers:
-    type: integer
-    nullable: true
-    example: 4
+    $ref: "../fields/MaxPlayers.yaml"
   playingTime:
-    type: integer
-    nullable: true
-    example: 120
+    $ref: "../fields/PlayingTime.yaml"
   minPlayTime:
-    type: integer
-    nullable: true
-    example: 60
+    $ref: "../fields/MinPlayTime.yaml"
   maxPlayTime:
-    type: integer
-    nullable: true
-    example: 120
+    $ref: "../fields/MaxPlayTime.yaml"
   minAge:
-    type: integer
-    nullable: true
-    example: 14
+    $ref: "../fields/MinAge.yaml"
   yearPublished:
-    type: integer
-    nullable: true
-    example: 2017
+    $ref: "../fields/YearPublished.yaml"
   imageUrl:
-    type: string
-    maxLength: 500
-    nullable: true
-    example: "https://boardgame-tracker.com/image.jpg"
+    $ref: "../fields/ImageUrl.yaml"
   previewUrl:
-    type: string
-    maxLength: 500
-    nullable: true
-    example: "https://boardgame-tracker.com/preview.jpg"
+    $ref: "../fields/PreviewUrl.yaml"
   isCustom:
-    type: boolean
-    default: false
-    example: false
+    $ref: "../fields/IsCustom.yaml"
   tags:
-    type: array
-    items:
-      $ref: "./Tag.yaml"
-    example: []
+    $ref: "../fields/Tags.yaml"

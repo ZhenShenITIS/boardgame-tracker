@@ -1,20 +1,12 @@
 package itis.boardgametracker.repository
 
-import itis.boardgametracker.constant.BoardGameType
-import itis.boardgametracker.exception.NotFoundException
 import itis.boardgametracker.model.BoardGame
 import itis.boardgametracker.model.Tag
-import itis.boardgametracker.util.getInstant
-import itis.boardgametracker.util.getNullableDouble
-import itis.boardgametracker.util.getNullableInt
-import itis.boardgametracker.util.getNullableLong
-import org.springframework.dao.EmptyResultDataAccessException
-import org.springframework.jdbc.core.RowMapper
+import itis.boardgametracker.util.BoardGameRowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.stereotype.Repository
-import java.sql.ResultSet
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
@@ -43,7 +35,7 @@ class BoardGameRepository(
             min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
             bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
             FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR (is_custom = TRUE AND created_by_id = :userId))
+            WHERE display_name % :query AND (is_custom = FALSE OR created_by_id = :userId)
             ORDER BY similarity(display_name, :query) DESC, display_name ASC
             LIMIT :limit
             OFFSET :offset
@@ -95,7 +87,7 @@ class BoardGameRepository(
     private val countFindBoardGamesByQueryAndUserIdWithLimitOffsetSql: String = """
         SELECT COUNT(*)
             FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR (is_custom = TRUE AND created_by_id = :userId))
+            WHERE display_name % :query AND (is_custom = FALSE OR created_by_id = :userId)
     """.trimIndent()
 
     private val findBoardGamesByUserIdWithLimitOffsetSql: String = """
@@ -131,10 +123,6 @@ class BoardGameRepository(
         WHERE board_game_id = :boardGameId
     """.trimIndent()
 
-
-    // TODO: Возможно лучше в репозитории сделать идемпотентный метод save,
-    //  который будет проверять наличие сущности в бд по айди.
-    //  Если есть - делать апдейт нужных полей, если нет - то инсёрт
     fun create(boardGame: BoardGame): BoardGame {
         val boardGame = namedParameterJdbcTemplate
             .queryForObject(
@@ -187,9 +175,6 @@ class BoardGameRepository(
         }
     }
 
-
-    // TODO: Возможно лучше реализовать пагинацию через ID,
-    //  но так как общее количество настолок не слишком большее можно оставить так
     fun findByQueryAndUserIdWithLimitOffset(userId: Long, query: String?, limit: Int, offset: Int): List<BoardGame> {
         if (query != null) {
             return namedParameterJdbcTemplate.query(
@@ -249,29 +234,23 @@ class BoardGameRepository(
         )
     }
 
-    fun findById(id: Long): BoardGame {
-        return try {
-            namedParameterJdbcTemplate.queryForObject(
-                findById,
-                MapSqlParameterSource()
-                    .addValue("id", id),
-                BoardGameRowMapper
-            ) ?: throw IllegalStateException()
-        } catch (_: EmptyResultDataAccessException) {
-            throw NotFoundException()
-        }
-    }
+    fun findById(id: Long) =
+        namedParameterJdbcTemplate.queryForObject(
+            findById,
+            MapSqlParameterSource()
+                .addValue("id", id),
+            BoardGameRowMapper
+        )!!
+
 
     fun update(boardGame: BoardGame): BoardGame {
-        val boardGame = try {
+        val boardGame =
             namedParameterJdbcTemplate.queryForObject(
                 updateById,
                 map(boardGame),
                 BoardGameRowMapper
-            ) ?: throw IllegalStateException()
-        } catch (_: EmptyResultDataAccessException) {
-            throw NotFoundException()
-        }
+            )!!
+
 
         val boardGameId = boardGame.id ?: throw IllegalStateException()
         deleteTagsRelationsByBoardGameId(boardGameId)
@@ -280,7 +259,7 @@ class BoardGameRepository(
     }
 
 
-    private fun deleteTagsRelationsByBoardGameId (boardGameId: Long) {
+    private fun deleteTagsRelationsByBoardGameId(boardGameId: Long) {
         namedParameterJdbcTemplate.update(
             deleteTagsRelationByBoardGameId,
             MapSqlParameterSource()
@@ -321,34 +300,6 @@ class BoardGameRepository(
             java.sql.Types.TIMESTAMP_WITH_TIMEZONE
         )
         return map
-    }
-
-    object BoardGameRowMapper : RowMapper<BoardGame> {
-        override fun mapRow(rs: ResultSet, rowNum: Int): BoardGame? {
-            return BoardGame(
-                id = rs.getLong("id"),
-                bggId = rs.getNullableLong("bgg_id"),
-                type = BoardGameType.valueOf(rs.getString("type")),
-                originalName = rs.getString("original_name"),
-                displayName = rs.getString("display_name"),
-                complexity = rs.getNullableDouble("complexity"),
-                minPlayers = rs.getNullableInt("min_players"),
-                maxPlayers = rs.getNullableInt("max_players"),
-                playingTime = rs.getNullableInt("playing_time"),
-                minPlayTime = rs.getNullableInt("min_play_time"),
-                maxPlayTime = rs.getNullableInt("max_play_time"),
-                minAge = rs.getNullableInt("min_age"),
-                yearPublished = rs.getNullableInt("year_published"),
-                s3ImageKey = rs.getString("s3_image_key"),
-                s3PreviewKey = rs.getString("s3_preview_key"),
-                bggImageUrl = rs.getString("bgg_image_url"),
-                bggPreviewUrl = rs.getString("bgg_preview_url"),
-                isCustom = rs.getBoolean("is_custom"),
-                createdById = rs.getNullableLong("created_by"),
-                createdAt = rs.getInstant("created_at"),
-                updatedAt = rs.getInstant("updated_at")
-            )
-        }
     }
 
 

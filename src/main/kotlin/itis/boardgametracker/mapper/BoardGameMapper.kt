@@ -8,26 +8,8 @@ import itis.boardgametracker.model.Tag
 import itis.boardgametracker.properties.S3Properties
 import org.springframework.stereotype.Component
 
-@Component
-class BoardGameMapper(
-    private val s3Properties: S3Properties
-) {
-    fun map(boardGame: BoardGame): itis.boardgametracker.api.dto.BoardGame {
-        val imageUrl: String?
-        if (boardGame.s3ImageKey != null) {
-            imageUrl = s3Properties.baseS3Url + boardGame.s3ImageKey
-        } else {
-            imageUrl = boardGame.bggImageUrl
-        }
-
-        val previewUrl: String?
-        if (boardGame.s3PreviewKey != null) {
-            previewUrl = s3Properties.baseS3Url + boardGame.s3PreviewKey
-        } else {
-            previewUrl = boardGame.bggPreviewUrl
-        }
-
-
+object BoardGameMapper {
+    fun map(boardGame: BoardGame, imageUrl: String?, previewUrl: String?): itis.boardgametracker.api.dto.BoardGame {
         return itis.boardgametracker.api.dto.BoardGame(
             id = boardGame.id ?: 0,
             type = boardGame.type.name,
@@ -50,7 +32,6 @@ class BoardGameMapper(
         )
     }
 
-    // TODO: Подумать над тем можно ли здесь как-то убрать дублирование кода
     fun mapWithoutId(updateBoardGameRequest: UpdateBoardGameRequest): BoardGame {
         return BoardGame(
             bggId = updateBoardGameRequest.bggId,

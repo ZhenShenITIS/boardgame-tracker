@@ -1,0 +1,4 @@
+type: string
+maxLength: 500
+nullable: true
+example: "boardgames/1/preview.jpg"
