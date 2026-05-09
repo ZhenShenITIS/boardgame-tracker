@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: boardgame-tracker
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+s3:
+  base-s3-url: ""
