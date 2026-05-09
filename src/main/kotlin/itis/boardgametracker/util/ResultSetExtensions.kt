@@ -4,15 +4,22 @@ import java.sql.ResultSet
 import java.time.Instant
 import java.time.OffsetDateTime
 
+fun ResultSet.getNullableInt(columnLabel: String): Int? {
+    val value = this.getInt(columnLabel)
+    return if (this.wasNull()) null else value
+}
 
-fun ResultSet.getNullableInt(columnLabel: String): Int? =
-    this.getObject(columnLabel, Integer::class.java)?.toInt()
+fun ResultSet.getNullableLong(columnLabel: String): Long? {
+    val value = this.getLong(columnLabel)
+    return if (this.wasNull()) null else value
+}
 
-fun ResultSet.getNullableLong(columnLabel: String): Long? =
-    this.getObject(columnLabel, java.lang.Long::class.java)?.toLong()
+fun ResultSet.getNullableDouble(columnLabel: String): Double? {
+    val value = this.getDouble(columnLabel)
+    return if (this.wasNull()) null else value
+}
 
-fun ResultSet.getNullableDouble(columnLabel: String): Double? =
-    this.getObject(columnLabel, java.lang.Double::class.java)?.toDouble()
-
-fun ResultSet.getInstant(column: String): Instant =
-    this.getObject(column, OffsetDateTime::class.java).toInstant()
+fun ResultSet.getInstant(columnLabel: String): Instant {
+    val offsetDateTime = this.getObject(columnLabel, OffsetDateTime::class.java)
+    return offsetDateTime.toInstant()
+}

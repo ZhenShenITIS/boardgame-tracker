@@ -35,7 +35,7 @@ class BoardGameRepository(
             min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
             bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
             FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR created_by_id = :userId)
+            WHERE display_name % :query AND (is_custom = FALSE OR created_by = :userId)
             ORDER BY similarity(display_name, :query) DESC, display_name ASC
             LIMIT :limit
             OFFSET :offset
@@ -87,7 +87,7 @@ class BoardGameRepository(
     private val countFindBoardGamesByQueryAndUserIdWithLimitOffsetSql: String = """
         SELECT COUNT(*)
             FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR created_by_id = :userId)
+            WHERE display_name % :query AND (is_custom = FALSE OR created_by = :userId)
     """.trimIndent()
 
     private val findBoardGamesByUserIdWithLimitOffsetSql: String = """
@@ -95,7 +95,7 @@ class BoardGameRepository(
             min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
             bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
             FROM board_games
-            WHERE is_custom = FALSE OR (is_custom = TRUE AND created_by_id = :userId)
+            WHERE is_custom = FALSE OR (is_custom = TRUE AND created_by = :userId)
             LIMIT :limit
             OFFSET :offset
     """.trimIndent()
@@ -103,7 +103,7 @@ class BoardGameRepository(
     private val countFindBoardGamesByUserIdWithLimitOffsetSql: String = """
         SELECT COUNT (*)
         FROM board_games
-        WHERE is_custom = FALSE OR (is_custom = TRUE AND created_by_id = :userId)
+        WHERE is_custom = FALSE OR (is_custom = TRUE AND created_by = :userId)
     """.trimIndent()
 
     private val upsertTag: String = """

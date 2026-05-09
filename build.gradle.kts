@@ -23,6 +23,8 @@ repositories {
 extra["datasourceMicrometerVersion"] = "1.4.1"
 
 dependencies {
+    implementation("jakarta.validation:jakarta.validation-api")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -101,10 +103,14 @@ tasks.openApiGenerate {
 
 sourceSets {
     main {
-        kotlin.srcDir("$openApiGeneratedDir/src/main/kotlin")
+        kotlin.srcDirs(tasks.openApiGenerate.map { it.outputDir.get() + "/src/main/kotlin" })
     }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     dependsOn(tasks.openApiGenerate)
+}
+
+tasks.named<Jar>("jar") {
+    enabled = false
 }

@@ -3,7 +3,8 @@ FROM gradle:8.5-jdk17 AS builder
 WORKDIR /app
 
 COPY gradle/ ./gradle/
-COPY build.gradle.kts .build.gradle.kts
+COPY build.gradle.kts ./build.gradle.kts
+COPY settings.gradle.kts ./settings.gradle.kts
 COPY src/main/resources ./src/main/resources
 
 RUN --mount=type=cache,target=/home/gradle/.gradle \

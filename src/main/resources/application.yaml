@@ -9,3 +9,5 @@ spring:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+s3:
+  base-s3-url: ""
