@@ -3,6 +3,7 @@ package itis.boardgametracker.repository
 import itis.boardgametracker.model.BoardGame
 import itis.boardgametracker.model.Tag
 import itis.boardgametracker.util.BoardGameRowMapper
+import itis.boardgametracker.util.getInstant
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.support.GeneratedKeyHolder
@@ -115,12 +116,25 @@ class BoardGameRepository(
     """.trimIndent()
 
     private val insertBoardGameTagRelation: String = """
-        INSERT INTO board_games_tags (board_game_id, tag_id) VALUES (:boardGameId, tagId) ON CONFLICT DO NOTHING
+        INSERT INTO board_games_tags (board_game_id, tag_id) VALUES (:boardGameId, :tagId) ON CONFLICT DO NOTHING
     """.trimIndent()
 
     private val deleteTagsRelationByBoardGameId: String = """
         DELETE FROM board_games_tags
         WHERE board_game_id = :boardGameId
+    """.trimIndent()
+
+    private val findTagsByBoardGameIds: String = """
+        SELECT
+            bgt.board_game_id,
+            t.id,
+            t.name,
+            t.description,
+            t.created_at
+        FROM board_games_tags bgt
+                 JOIN tags t ON t.id = bgt.tag_id
+        WHERE bgt.board_game_id IN (:boardGameIds)
+        ORDER BY bgt.board_game_id, t.name
     """.trimIndent()
 
     fun create(boardGame: BoardGame): BoardGame {
@@ -161,8 +175,8 @@ class BoardGameRepository(
                 (keys["id"] as Number).toLong()
             }.map {
                 MapSqlParameterSource()
-                    .addValue("board_game_id", boardGameId)
-                    .addValue("tag_id", it)
+                    .addValue("boardGameId", boardGameId)
+                    .addValue("tagId", it)
             }.toTypedArray()
         )
 
@@ -170,14 +184,14 @@ class BoardGameRepository(
             Tag(
                 id = (keys["id"] as Number).toLong(),
                 name = keys["name"] as String,
-                description = keys["description"] as String,
+                description = keys["description"] as String?,
             )
         }
     }
 
     fun findByQueryAndUserIdWithLimitOffset(userId: Long, query: String?, limit: Int, offset: Int): List<BoardGame> {
         if (query != null) {
-            return namedParameterJdbcTemplate.query(
+            val boardGames = namedParameterJdbcTemplate.query(
                 findBoardGamesByQueryAndUserIdWithLimitOffsetSql,
                 MapSqlParameterSource()
                     .addValue("userId", userId)
@@ -186,9 +200,10 @@ class BoardGameRepository(
                     .addValue("query", query),
                 BoardGameRowMapper
             )
+            return enrichWithTags(boardGames)
         }
 
-        return namedParameterJdbcTemplate.query(
+        val boardGames = namedParameterJdbcTemplate.query(
             findBoardGamesByUserIdWithLimitOffsetSql,
             MapSqlParameterSource()
                 .addValue("userId", userId)
@@ -196,7 +211,7 @@ class BoardGameRepository(
                 .addValue("offset", offset),
             BoardGameRowMapper
         )
-
+        return enrichWithTags(boardGames)
 
     }
 
@@ -234,13 +249,15 @@ class BoardGameRepository(
         )
     }
 
-    fun findById(id: Long) =
-        namedParameterJdbcTemplate.queryForObject(
+    fun findById(id: Long): BoardGame {
+        val boardGame = namedParameterJdbcTemplate.queryForObject(
             findById,
             MapSqlParameterSource()
                 .addValue("id", id),
             BoardGameRowMapper
         )!!
+        return enrichWithTags(listOf(boardGame)).first()
+    }
 
 
     fun update(boardGame: BoardGame): BoardGame {
@@ -265,6 +282,40 @@ class BoardGameRepository(
             MapSqlParameterSource()
                 .addValue("boardGameId", boardGameId)
         )
+    }
+
+    private fun enrichWithTags(boardGames: List<BoardGame>): List<BoardGame> {
+        if (boardGames.isEmpty()) {
+            return boardGames
+        }
+
+        val boardGameIds = boardGames.mapNotNull { it.id }
+        if (boardGameIds.isEmpty()) {
+            return boardGames
+        }
+
+        val tagsByBoardGameId = namedParameterJdbcTemplate.query(
+            findTagsByBoardGameIds,
+            MapSqlParameterSource()
+                .addValue("boardGameIds", boardGameIds)
+        ) { rs, _ ->
+            Pair(
+                rs.getLong("board_game_id"),
+                Tag(
+                    id = rs.getLong("id"),
+                    name = rs.getString("name"),
+                    description = rs.getString("description"),
+                    createdAt = rs.getInstant("created_at")
+                )
+            )
+        }.groupBy(
+            keySelector = { it.first },
+            valueTransform = { it.second }
+        )
+
+        return boardGames.map { boardGame ->
+            boardGame.copy(tags = tagsByBoardGameId[boardGame.id].orEmpty())
+        }
     }
 
 

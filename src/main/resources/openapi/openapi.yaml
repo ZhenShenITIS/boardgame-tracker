@@ -6,10 +6,9 @@ info:
 servers:
   - url: http://localhost:8088
 
-#security:
-#  - BearerAuth: []
+security:
+  - BearerAuth: []
 
-security: []
 paths:
   /auth/login:
     $ref: './paths/auth.login.yaml'
