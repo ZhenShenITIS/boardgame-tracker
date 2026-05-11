@@ -1,28 +1,24 @@
 package itis.boardgametracker.integration
 
-import itis.boardgametracker.api.BoardGameController
+import itis.boardgametracker.api.dto.BoardGame
 import itis.boardgametracker.api.dto.CreateBoardGameRequest
 import itis.boardgametracker.api.dto.UpdateBoardGameRequest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.stream.Stream
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
+
 
 class BoardGameCrudIntegrationTest : IntegrationTest() {
 
     @Autowired
-    lateinit var boardGameController: BoardGameController
-
-    @Autowired
-    lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+    lateinit var mockMvc: MockMvc
 
 
     private companion object {
@@ -75,64 +71,74 @@ class BoardGameCrudIntegrationTest : IntegrationTest() {
 
         @JvmStatic
         fun getCreatBoardGameRequestAndUpdateBoardGameRequest(): Stream<Arguments> {
-            return Stream.of(Arguments.of(createBoardGameRequest,updateBoardGameRequest ))
+            return Stream.of(Arguments.of(createBoardGameRequest, updateBoardGameRequest))
         }
 
     }
 
-    private fun createBoardGameAndDirectCount(createBoardGameRequest: CreateBoardGameRequest) {
-        val response = boardGameController.boardgamesPost(createBoardGameRequest)
-        val countWithCorrectQuery = jdbcTemplate.queryForObject(
-            """
-        SELECT COUNT(*)
-            FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR created_by = :userId)
-    """.trimIndent(),
-            MapSqlParameterSource()
-                .addValue("query", "мрчная гавнь")
-                .addValue("userId", 1),
-            Long::class.java
-        )!!
-        val countWithIncorrectQuery = jdbcTemplate.queryForObject(
-            """
-        SELECT COUNT(*)
-            FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR created_by = :userId)
-    """.trimIndent(),
-            MapSqlParameterSource()
-                .addValue("query", "null")
-                .addValue("userId", 0),
-            Long::class.java
-        )!!
+    private fun createBoardGame(createBoardGameRequest: CreateBoardGameRequest) =
+        mockMvc.perform(
+            post("/boardgames")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createBoardGameRequest))
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+            .let {
+                objectMapper
+                    .readValue(
+                        it.response.contentAsString,
+                        BoardGame::class.java
+                    )
+            }
 
-        assertNotNull(response.body?.id)
+    private fun createBoardGameAndDirectCount(createBoardGameRequest: CreateBoardGameRequest) {
+        val response = createBoardGame(createBoardGameRequest)
+
+        val countWithCorrectQuery = testJdbcBoardGameRepository.countByFuzzyDisplayNameAndUser("мрчная гавнь", 1L)
+        val countWithIncorrectQuery = testJdbcBoardGameRepository.countByFuzzyDisplayNameAndUser("null", 0L)
+
+        assertNotNull(response?.id)
         assertEquals(1, countWithCorrectQuery)
         assertEquals(0, countWithIncorrectQuery)
     }
 
 
     private fun createBoardGameAndFind(createBoardGameRequest: CreateBoardGameRequest) {
-        val createResponse = boardGameController.boardgamesPost(createBoardGameRequest)
-        val findWithCorrectQueryResponse = boardGameController.boardgamesGet("мрачна гвань", 1, 25)
-        val findWithIncorrectQueryResponse = boardGameController.boardgamesGet("null", 1, 25)
-        assertNotNull(findWithCorrectQueryResponse.body?.data?.isEmpty())
-        assertFalse { findWithCorrectQueryResponse.body?.data?.isEmpty()!! }
-        assertNotNull(findWithIncorrectQueryResponse.body?.data?.isEmpty())
-        assertTrue { findWithIncorrectQueryResponse.body?.data?.isEmpty()!! }
-        assertEquals(createResponse.body?.id, findWithCorrectQueryResponse.body?.data?.get(0)?.id)
+        val createResponse = createBoardGame(createBoardGameRequest)
+
+        val findWithCorrectQueryResponse = mockMvc.perform(
+            get("/boardgames")
+                .param("query", "мрачна гвань")
+                .param("offset", "1")
+                .param("limit", "25")
+        )
+            .andExpect(status().isOk)
+            .andReturn()
+            .let { objectMapper.readTree(it.response.contentAsString) }
+
+        val findWithIncorrectQueryResponse = mockMvc.perform(
+            get("/boardgames")
+                .param("query", "null")
+                .param("offset", "1")
+                .param("limit", "25")
+        )
+            .andExpect(status().isOk)
+            .andReturn()
+            .let { objectMapper.readTree(it.response.contentAsString) }
+
+        assertFalse(findWithCorrectQueryResponse["data"].isEmpty)
+        assertTrue(findWithIncorrectQueryResponse["data"].isEmpty)
+        assertEquals(createResponse.id, findWithCorrectQueryResponse["data"][0]["id"].asLong())
     }
 
     private fun createBoardGameAndDelete(createBoardGameRequest: CreateBoardGameRequest) {
-        val createResponse = boardGameController.boardgamesPost(createBoardGameRequest)
-        boardGameController.boardgamesIdDelete(createResponse.body!!.id)
-        val count = jdbcTemplate.queryForObject(
-            """
-        SELECT COUNT(*)
-            FROM board_games
-                """.trimIndent(),
-            MapSqlParameterSource(),
-            Long::class.java
-        )!!
+        val createResponse = createBoardGame(createBoardGameRequest)
+
+        mockMvc.perform(delete("/boardgames/${createResponse.id}"))
+            .andExpect(status().isNoContent)
+
+        val count = testJdbcBoardGameRepository.countAll()
         assertEquals(0, count)
     }
 
@@ -140,22 +146,19 @@ class BoardGameCrudIntegrationTest : IntegrationTest() {
         createBoardGameRequest: CreateBoardGameRequest,
         updateBoardGameRequest: UpdateBoardGameRequest
     ) {
-        val createResponse = boardGameController.boardgamesPost(createBoardGameRequest)
-        val id = createResponse.body!!.id
-        boardGameController.boardgamesIdPut(id, updateBoardGameRequest)
-        val displayName = jdbcTemplate.queryForObject(
-            """
-        SELECT display_name
-            FROM board_games WHERE id = :id
-                """.trimIndent(),
-            MapSqlParameterSource()
-                .addValue("id", id),
-            String::class.java
-        )!!
+        val createResponse = createBoardGame(createBoardGameRequest)
+
+        val id = createResponse.id
+        mockMvc.perform(
+            put("/boardgames/$id")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateBoardGameRequest))
+        )
+            .andExpect(status().isOk)
+
+        val displayName = testJdbcBoardGameRepository.findDisplayNameById(id)
         assertEquals(updateBoardGameRequest.displayName, displayName)
     }
-
-
 
 
     @ParameterizedTest
@@ -183,11 +186,6 @@ class BoardGameCrudIntegrationTest : IntegrationTest() {
         updateBoardGameRequest: UpdateBoardGameRequest
     ) {
         createBoardGameAndUpdate(createBoardGameRequest, updateBoardGameRequest)
-    }
-
-    @Test
-    fun testNotFoundOnFindById () {
-
     }
 
 
