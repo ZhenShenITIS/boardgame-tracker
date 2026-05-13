@@ -11,3 +11,10 @@ spring:
     password: ${POSTGRES_PASSWORD}
 s3:
   base-s3-url: ""
+app:
+  security:
+    jwt:
+      issuer: test-issuer
+      access-token-ttl-seconds: 3600
+      refresh-token-ttl-seconds: 2592000
+      secret: test-secret-test-secret-test-secret

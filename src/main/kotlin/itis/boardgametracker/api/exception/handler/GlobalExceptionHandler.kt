@@ -2,10 +2,18 @@ package itis.boardgametracker.api.exception.handler
 
 import itis.boardgametracker.api.dto.Error
 import itis.boardgametracker.api.dto.ErrorError
+import itis.boardgametracker.exception.DuplicateEmailException
+import itis.boardgametracker.exception.InvalidCredentialsException
+import itis.boardgametracker.exception.InvalidOrExpiredRefreshTokenException
 import itis.boardgametracker.exception.NotFoundException
+import itis.boardgametracker.exception.OldPasswordMismatchException
+import itis.boardgametracker.exception.RevokedRefreshTokenReuseException
+import itis.boardgametracker.exception.UserNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -23,6 +31,86 @@ class GlobalExceptionHandler {
                     ErrorError(
                         code = "NOT_FOUND",
                         message = "Запрашиваемый ресурс не найден"
+                    )
+                )
+            )
+    }
+
+    @ExceptionHandler(AuthenticationException::class)
+    fun handleAuthenticationException(exception: AuthenticationException): ResponseEntity<Error> {
+        log.atWarn().log("Не авторизован")
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(
+                Error(
+                    ErrorError(
+                        code = "UNAUTHORIZED",
+                        message = "Требуется аутентификация"
+                    )
+                )
+            )
+    }
+
+    @ExceptionHandler(DuplicateEmailException::class)
+    fun handleDuplicateEmailException(exception: DuplicateEmailException): ResponseEntity<Error> {
+        log.atWarn().log("Email conflict")
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(
+                Error(
+                    ErrorError(
+                        code = "CONFLICT",
+                        message = "Пользователь с таким email уже существует"
+                    )
+                )
+            )
+    }
+
+    @ExceptionHandler(
+        InvalidCredentialsException::class,
+        InvalidOrExpiredRefreshTokenException::class,
+        RevokedRefreshTokenReuseException::class,
+        OldPasswordMismatchException::class
+    )
+    fun handleAuthInvalidException(exception: RuntimeException): ResponseEntity<Error> {
+        log.atWarn().log("Unauthorized auth request")
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(
+                Error(
+                    ErrorError(
+                        code = "UNAUTHORIZED",
+                        message = "Неверные учетные данные или токен"
+                    )
+                )
+            )
+    }
+
+    @ExceptionHandler(UserNotFoundException::class)
+    fun handleUserNotFoundException(exception: UserNotFoundException): ResponseEntity<Error> {
+        log.atWarn().log("User not found")
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                Error(
+                    ErrorError(
+                        code = "NOT_FOUND",
+                        message = "Пользователь не найден"
+                    )
+                )
+            )
+    }
+
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDeniedException(exception: AccessDeniedException): ResponseEntity<Error> {
+        log.atWarn().log("Нет прав доступа к ресурсу")
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(
+                Error(
+                    ErrorError(
+                        code = "FORBIDDEN",
+                        message = "Доступ запрещён"
                     )
                 )
             )

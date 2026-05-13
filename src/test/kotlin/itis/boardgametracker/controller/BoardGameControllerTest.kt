@@ -3,6 +3,7 @@ package itis.boardgametracker.controller
 import itis.boardgametracker.ApplicationTestConfiguration
 import itis.boardgametracker.api.BoardGameController
 import itis.boardgametracker.exception.NotFoundException
+import itis.boardgametracker.security.CurrentUserProvider
 import itis.boardgametracker.service.BoardGameService
 import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,6 +29,9 @@ class BoardGameControllerTest {
 
     @MockitoBean
     lateinit var boardGameService: BoardGameService
+
+    @MockitoBean
+    lateinit var currentUserProvider: CurrentUserProvider
 
     @Autowired
     lateinit var mockMvc: MockMvc

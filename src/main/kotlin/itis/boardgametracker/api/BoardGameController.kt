@@ -4,6 +4,7 @@ import itis.boardgametracker.api.dto.BoardGame
 import itis.boardgametracker.api.dto.BoardGameList
 import itis.boardgametracker.api.dto.CreateBoardGameRequest
 import itis.boardgametracker.api.dto.UpdateBoardGameRequest
+import itis.boardgametracker.security.CurrentUserProvider
 import itis.boardgametracker.service.BoardGameService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -12,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class BoardGameController(
-    private val boardGameService: BoardGameService
+    private val boardGameService: BoardGameService,
+    private val currentUserProvider: CurrentUserProvider
 ) : BoardgamesApi {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -22,8 +24,7 @@ class BoardGameController(
         page: Int,
         limit: Int
     ): ResponseEntity<BoardGameList> {
-        // TODO: После реализации аутентификации нужно сделать вытаскивание userId из SecurityContext
-        val userId = 1L
+        val userId = currentUserProvider.currentUserId()
 
         log.atInfo()
             .addKeyValue("userId", userId)

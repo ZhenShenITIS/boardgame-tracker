@@ -3,11 +3,16 @@ package itis.boardgametracker.integration
 import itis.boardgametracker.api.dto.BoardGame
 import itis.boardgametracker.api.dto.CreateBoardGameRequest
 import itis.boardgametracker.api.dto.UpdateBoardGameRequest
+import itis.boardgametracker.security.CurrentUserPrincipal
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -20,6 +25,18 @@ class BoardGameCrudIntegrationTest : IntegrationTest() {
     @Autowired
     lateinit var mockMvc: MockMvc
 
+    @BeforeEach
+    fun setCurrentUser() {
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            CurrentUserPrincipal(
+                userId = 1L,
+                email = "test@itis.com",
+                roles = listOf("ROLE_USER")
+            ),
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_USER"))
+        )
+    }
 
     private companion object {
         val createBoardGameRequest = CreateBoardGameRequest(
