@@ -1,0 +1,23 @@
+get:
+  summary: Получить статус импорта игр из BGG
+  tags: [ admin ]
+  parameters:
+    - name: jobId
+      in: query
+      required: false
+      description: Идентификатор job импорта. Если не передан, возвращается последний job.
+      schema:
+        type: string
+  responses:
+    200:
+      description: Текущий статус job импорта
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/BggImportJobStatus.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    403:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'

@@ -1,0 +1,27 @@
+type: object
+required: [collectionItemId, boardGame, playCount, status, score, reasons]
+properties:
+  collectionItemId:
+    type: integer
+    format: int64
+    example: 123
+  boardGame:
+    $ref: './BoardGame.yaml'
+  playCount:
+    type: integer
+    minimum: 0
+    example: 0
+  status:
+    $ref: './CollectionItemStatus.yaml'
+  score:
+    type: number
+    format: double
+    example: 1020.5
+  reasons:
+    type: array
+    items:
+      type: string
+    example:
+      - "shelf_of_shame_bonus"
+      - "matches_player_count"
+      - "short_play_time_bonus"

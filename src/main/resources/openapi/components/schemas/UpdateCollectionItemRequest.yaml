@@ -1,0 +1,27 @@
+type: object
+required: [boardGameId]
+properties:
+  boardGameId:
+    type: integer
+    format: int64
+    minimum: 1
+    example: 1
+  datePurchased:
+    type: string
+    format: date
+    nullable: true
+    example: "2026-05-16"
+  sumInRubles:
+    type: number
+    minimum: 0
+    nullable: true
+    example: 4990.00
+  status:
+    allOf:
+      - $ref: './CollectionItemStatus.yaml'
+    default: IN_COLLECTION
+  comment:
+    type: string
+    nullable: true
+    maxLength: 2000
+    example: "Поменял статус после переезда"

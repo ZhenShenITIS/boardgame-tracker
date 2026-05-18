@@ -1,0 +1,26 @@
+post:
+  summary: Запустить импорт игр из BGG в локальную БД
+  tags: [ admin ]
+  parameters:
+    - name: startLine
+      in: query
+      required: true
+      description: Номер строки файла top10000.txt, с которой начинается импорт
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    202:
+      description: Импорт запущен
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/BggImportJobStatus.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    403:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    409:
+      $ref: '../components/responses/Conflict.yaml'

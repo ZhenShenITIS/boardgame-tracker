@@ -1,0 +1,30 @@
+post:
+  summary: Быстро добавить игровую сессию (+1 партия)
+  tags: [ play-sessions ]
+  parameters:
+    - name: collectionItemId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/QuickPlaySessionRequest.yaml'
+  responses:
+    201:
+      description: Игровая сессия создана
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PlaySession.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'

@@ -1,0 +1,28 @@
+get:
+  summary: Получить полку позора пользователя
+  tags: [ collection-items ]
+  parameters:
+    - name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        default: 25
+        maximum: 100
+        minimum: 1
+  responses:
+    200:
+      description: Список несыгранных игр пользователя
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ShelfOfShameList.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'

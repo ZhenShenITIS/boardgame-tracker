@@ -1,0 +1,46 @@
+type: object
+required:
+  - jobId
+  - status
+  - startLine
+  - startedAt
+  - processed
+  - saved
+  - skippedInvalid
+  - skippedDuplicate
+  - errors
+properties:
+  jobId:
+    type: string
+  status:
+    type: string
+    enum:
+      - RUNNING
+      - COMPLETED
+      - FAILED
+  startLine:
+    type: integer
+    minimum: 1
+  startedAt:
+    type: string
+    format: date-time
+  finishedAt:
+    type: string
+    format: date-time
+  processed:
+    type: integer
+    minimum: 0
+  saved:
+    type: integer
+    minimum: 0
+  skippedInvalid:
+    type: integer
+    minimum: 0
+  skippedDuplicate:
+    type: integer
+    minimum: 0
+  errors:
+    type: integer
+    minimum: 0
+  message:
+    type: string

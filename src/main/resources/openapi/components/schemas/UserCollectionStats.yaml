@@ -1,0 +1,23 @@
+type: object
+required: [totalItems, playedItems, unplayedItems, shelfOfShameCost, playedPercent]
+properties:
+  totalItems:
+    type: integer
+    minimum: 0
+    example: 10
+  playedItems:
+    type: integer
+    minimum: 0
+    example: 4
+  unplayedItems:
+    type: integer
+    minimum: 0
+    example: 6
+  shelfOfShameCost:
+    type: number
+    minimum: 0
+    example: 24990.00
+  playedPercent:
+    type: number
+    minimum: 0
+    example: 40.00

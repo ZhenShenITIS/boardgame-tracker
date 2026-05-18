@@ -1,0 +1,12 @@
+get:
+  summary: Получить статистику коллекции текущего пользователя
+  tags: [ me ]
+  responses:
+    200:
+      description: Статистика коллекции
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UserCollectionStats.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'

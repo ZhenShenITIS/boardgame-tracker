@@ -1,0 +1,47 @@
+type: object
+required: [id, userId, boardGame, status, playCount, createdAt, updatedAt]
+properties:
+  id:
+    type: integer
+    format: int64
+    readOnly: true
+    example: 1
+  userId:
+    type: integer
+    format: int64
+    readOnly: true
+    example: 42
+  boardGame:
+    $ref: './BoardGame.yaml'
+  datePurchased:
+    type: string
+    format: date
+    nullable: true
+    example: "2026-05-16"
+  sumInRubles:
+    type: number
+    nullable: true
+    minimum: 0
+    example: 4990.00
+  status:
+    $ref: './CollectionItemStatus.yaml'
+  playCount:
+    type: integer
+    minimum: 0
+    readOnly: true
+    example: 0
+  comment:
+    type: string
+    nullable: true
+    maxLength: 2000
+    example: "Пока не играл"
+  createdAt:
+    type: string
+    format: date-time
+    readOnly: true
+    example: "2026-05-16T08:30:00Z"
+  updatedAt:
+    type: string
+    format: date-time
+    readOnly: true
+    example: "2026-05-16T08:30:00Z"

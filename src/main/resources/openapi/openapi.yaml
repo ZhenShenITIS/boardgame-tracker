@@ -26,6 +26,28 @@ paths:
     $ref: './paths/boardgames.yaml'
   /boardgames/{id}:
     $ref: './paths/boardgames.id.yaml'
+  /collection-items:
+    $ref: './paths/collection-items.yaml'
+  /collection-items/custom-game:
+    $ref: './paths/collection-items.custom-game.yaml'
+  /collection-items/shelf-of-shame:
+    $ref: './paths/collection-items.shelf-of-shame.yaml'
+  /collection-items/{id}:
+    $ref: './paths/collection-items.id.yaml'
+  /collection-items/{collectionItemId}/play-sessions:
+    $ref: './paths/collection-items.collection-item-id.play-sessions.yaml'
+  /collection-items/{collectionItemId}/play-sessions/quick:
+    $ref: './paths/collection-items.collection-item-id.play-sessions.quick.yaml'
+  /play-sessions/{id}:
+    $ref: './paths/play-sessions.id.yaml'
+  /me/stats:
+    $ref: './paths/me.stats.yaml'
+  /recommendations/tonight:
+    $ref: './paths/recommendations.tonight.yaml'
+  /admin/boardgames/import-bgg:
+    $ref: './paths/admin.boardgames.import-bgg.yaml'
+  /admin/boardgames/import-bgg/status:
+    $ref: './paths/admin.boardgames.import-bgg.status.yaml'
 
 
 
@@ -34,5 +56,3 @@ components:
   securitySchemes:
     BearerAuth:
       $ref: './components/securitySchemes/BearerAuth.yaml'
-
-

@@ -1,0 +1,9 @@
+type: object
+required: [data, pagination]
+properties:
+  data:
+    type: array
+    items:
+      $ref: './PlaySession.yaml'
+  pagination:
+    $ref: './Pagination.yaml'

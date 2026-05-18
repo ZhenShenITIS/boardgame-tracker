@@ -5,96 +5,204 @@ import itis.boardgametracker.api.dto.CreateBoardGameRequest
 import itis.boardgametracker.api.dto.UpdateBoardGameRequest
 import itis.boardgametracker.security.CurrentUserPrincipal
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.stream.Stream
-import kotlin.test.*
-
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class BoardGameCrudIntegrationTest : IntegrationTest() {
 
     @Autowired
     lateinit var mockMvc: MockMvc
 
+    private var userId: Long = 0
+    private var otherUserId: Long = 0
+    private var adminUserId: Long = 0
+
     @BeforeEach
     fun setCurrentUser() {
-        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
-            CurrentUserPrincipal(
-                userId = 1L,
-                email = "test@itis.com",
-                roles = listOf("ROLE_USER")
-            ),
-            null,
-            listOf(SimpleGrantedAuthority("ROLE_USER"))
-        )
+        userId = testJdbcBoardGameRepository.createUser(uniqueEmail("boardgame-user"))
+        otherUserId = testJdbcBoardGameRepository.createUser(uniqueEmail("boardgame-other"))
+        adminUserId = testJdbcBoardGameRepository.createUser(uniqueEmail("boardgame-admin"))
+        authenticate(userId, "ROLE_USER")
     }
 
-    private companion object {
-        val createBoardGameRequest = CreateBoardGameRequest(
-            type = "BOARDGAME",
-            originalName = "Gloomhaven",
-            displayName = "Мрачная гавань",
-            isCustom = false,
-            tags = emptyList(),
-            bggId = 174430,
-            complexity = 3.91,
-            minPlayers = 1,
-            maxPlayers = 4,
-            playingTime = 120,
-            minPlayTime = 60,
-            maxPlayTime = 120,
-            minAge = 14,
-            yearPublished = 2017,
-            s3ImageKey = "boardgames/1/image.jpg",
-            s3PreviewKey = "boardgames/1/preview.jpg",
-            bggImageUrl = "https://cf.geekdo-images.com/image.jpg",
-            bggPreviewUrl = "https://cf.geekdo-images.com/preview.jpg"
+    @Test
+    fun listDoesNotReturnForeignCustomGameForUser() {
+        val globalGame = createBoardGameAsAdmin(createRequest(displayName = "Мрачная гавань", isCustom = false))
+        val foreignCustomGame = createBoardGameAsAdmin(
+            createRequest(displayName = "Мрачная гавань чужая", isCustom = true, createdById = otherUserId)
         )
 
-        val updateBoardGameRequest = UpdateBoardGameRequest(
-            type = "BOARDGAME",
-            originalName = "Gloomhaven",
-            displayName = "Весёлая гавань",
-            isCustom = false,
-            tags = emptyList(),
-            bggId = 174430,
-            complexity = 3.91,
-            minPlayers = 1,
-            maxPlayers = 4,
-            playingTime = 120,
-            minPlayTime = 60,
-            maxPlayTime = 120,
-            minAge = 14,
-            yearPublished = 2017,
-            s3ImageKey = "boardgames/1/image.jpg",
-            s3PreviewKey = "boardgames/1/preview.jpg",
-            bggImageUrl = "https://cf.geekdo-images.com/image.jpg",
-            bggPreviewUrl = "https://cf.geekdo-images.com/preview.jpg"
+        authenticate(userId, "ROLE_USER")
+        val ownCustomGame = createBoardGame(
+            createRequest(displayName = "Мрачная гавань авторская", isCustom = true, createdById = otherUserId)
         )
 
-        @JvmStatic
-        fun getCreatBoardGameRequest(): Stream<Arguments> {
-            return Stream.of(Arguments.of(createBoardGameRequest))
-        }
+        val response = mockMvc.perform(
+            get("/boardgames")
+                .param("query", "Мрачная гавань")
+                .param("page", "1")
+                .param("limit", "10")
+        )
+            .andExpect(status().isOk)
+            .andReturn()
+            .let { objectMapper.readTree(it.response.contentAsString) }
 
-        @JvmStatic
-        fun getCreatBoardGameRequestAndUpdateBoardGameRequest(): Stream<Arguments> {
-            return Stream.of(Arguments.of(createBoardGameRequest, updateBoardGameRequest))
-        }
-
+        val ids = response["data"].map { it["id"].asLong() }.toSet()
+        assertTrue(ids.contains(globalGame.id))
+        assertTrue(ids.contains(ownCustomGame.id))
+        assertFalse(ids.contains(foreignCustomGame.id))
+        assertEquals(2, response["pagination"]["total"].asInt())
     }
 
-    private fun createBoardGame(createBoardGameRequest: CreateBoardGameRequest) =
+    @Test
+    fun getForeignCustomGameReturns404() {
+        val foreignCustomGame = createBoardGameAsAdmin(
+            createRequest(displayName = "Foreign custom", isCustom = true, createdById = otherUserId)
+        )
+
+        authenticate(userId, "ROLE_USER")
+        mockMvc.perform(get("/boardgames/${foreignCustomGame.id}"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun userCreateGlobalGameReturns403() {
         mockMvc.perform(
+            post("/boardgames")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest(displayName = "Global", isCustom = false)))
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun userCreateCustomGameStoresCurrentUserAsCreatedBy() {
+        val createdGame = createBoardGame(
+            createRequest(displayName = "Own custom", isCustom = true, createdById = otherUserId)
+        )
+
+        assertNotNull(createdGame.id)
+        assertEquals(userId, testJdbcBoardGameRepository.findCreatedByIdById(createdGame.id))
+        assertEquals(true, testJdbcBoardGameRepository.findIsCustomById(createdGame.id))
+    }
+
+    @Test
+    fun userUpdateGlobalGameReturns403() {
+        val globalGame = createBoardGameAsAdmin(createRequest(displayName = "Global", isCustom = false))
+
+        authenticate(userId, "ROLE_USER")
+        mockMvc.perform(
+            put("/boardgames/${globalGame.id}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest(displayName = "Updated", isCustom = true)))
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun userUpdateOwnCustomGameReturns200AndKeepsOwnership() {
+        val ownCustomGame = createBoardGame(
+            createRequest(displayName = "Own custom", isCustom = true, createdById = otherUserId)
+        )
+
+        mockMvc.perform(
+            put("/boardgames/${ownCustomGame.id}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        updateRequest(displayName = "Updated custom", isCustom = false, createdById = otherUserId)
+                    )
+                )
+        )
+            .andExpect(status().isOk)
+
+        assertEquals("Updated custom", testJdbcBoardGameRepository.findDisplayNameById(ownCustomGame.id))
+        assertEquals(userId, testJdbcBoardGameRepository.findCreatedByIdById(ownCustomGame.id))
+        assertEquals(true, testJdbcBoardGameRepository.findIsCustomById(ownCustomGame.id))
+    }
+
+    @Test
+    fun deleteNonexistentReturns404() {
+        mockMvc.perform(delete("/boardgames/999999"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun userDeleteOwnCustomGameReturns204() {
+        val ownCustomGame = createBoardGame(createRequest(displayName = "Own custom", isCustom = true))
+
+        mockMvc.perform(delete("/boardgames/${ownCustomGame.id}"))
+            .andExpect(status().isNoContent)
+
+        assertEquals(0, testJdbcBoardGameRepository.countAll())
+    }
+
+    @Test
+    fun userDeleteGlobalGameReturns403() {
+        val globalGame = createBoardGameAsAdmin(createRequest(displayName = "Global", isCustom = false))
+
+        authenticate(userId, "ROLE_USER")
+        mockMvc.perform(delete("/boardgames/${globalGame.id}"))
+            .andExpect(status().isForbidden)
+
+        assertEquals(1, testJdbcBoardGameRepository.countAll())
+    }
+
+    @Test
+    fun adminCanManageGlobalGame() {
+        authenticate(adminUserId, "ROLE_ADMIN")
+
+        val globalGame = createBoardGame(createRequest(displayName = "Global", isCustom = false))
+        assertEquals(false, testJdbcBoardGameRepository.findIsCustomById(globalGame.id))
+
+        mockMvc.perform(
+            put("/boardgames/${globalGame.id}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest(displayName = "Updated global", isCustom = false)))
+        )
+            .andExpect(status().isOk)
+
+        assertEquals("Updated global", testJdbcBoardGameRepository.findDisplayNameById(globalGame.id))
+
+        mockMvc.perform(delete("/boardgames/${globalGame.id}"))
+            .andExpect(status().isNoContent)
+
+        assertEquals(0, testJdbcBoardGameRepository.countAll())
+    }
+
+    @Test
+    fun deleteBoardGameReferencedByCollectionReturns409() {
+        val globalGame = createBoardGameAsAdmin(createRequest(displayName = "Global", isCustom = false))
+        testJdbcBoardGameRepository.createCollectionItem(userId = userId, boardGameId = globalGame.id)
+
+        authenticate(adminUserId, "ROLE_ADMIN")
+        mockMvc.perform(delete("/boardgames/${globalGame.id}"))
+            .andExpect(status().isConflict)
+    }
+
+    private fun createBoardGameAsAdmin(createBoardGameRequest: CreateBoardGameRequest): BoardGame {
+        authenticate(adminUserId, "ROLE_ADMIN")
+        val createdGame = createBoardGame(createBoardGameRequest)
+        authenticate(userId, "ROLE_USER")
+        return createdGame
+    }
+
+    private fun createBoardGame(createBoardGameRequest: CreateBoardGameRequest): BoardGame {
+        return mockMvc.perform(
             post("/boardgames")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createBoardGameRequest))
@@ -102,108 +210,56 @@ class BoardGameCrudIntegrationTest : IntegrationTest() {
             .andExpect(status().isCreated)
             .andReturn()
             .let {
-                objectMapper
-                    .readValue(
-                        it.response.contentAsString,
-                        BoardGame::class.java
-                    )
+                objectMapper.readValue(
+                    it.response.contentAsString,
+                    BoardGame::class.java
+                )
             }
-
-    private fun createBoardGameAndDirectCount(createBoardGameRequest: CreateBoardGameRequest) {
-        val response = createBoardGame(createBoardGameRequest)
-
-        val countWithCorrectQuery = testJdbcBoardGameRepository.countByFuzzyDisplayNameAndUser("мрчная гавнь", 1L)
-        val countWithIncorrectQuery = testJdbcBoardGameRepository.countByFuzzyDisplayNameAndUser("null", 0L)
-
-        assertNotNull(response?.id)
-        assertEquals(1, countWithCorrectQuery)
-        assertEquals(0, countWithIncorrectQuery)
     }
 
-
-    private fun createBoardGameAndFind(createBoardGameRequest: CreateBoardGameRequest) {
-        val createResponse = createBoardGame(createBoardGameRequest)
-
-        val findWithCorrectQueryResponse = mockMvc.perform(
-            get("/boardgames")
-                .param("query", "мрачна гвань")
-                .param("offset", "1")
-                .param("limit", "25")
+    private fun createRequest(
+        displayName: String,
+        isCustom: Boolean,
+        createdById: Long? = null
+    ): CreateBoardGameRequest {
+        return CreateBoardGameRequest(
+            type = "BOARDGAME",
+            originalName = displayName,
+            displayName = displayName,
+            isCustom = isCustom,
+            tags = emptyList(),
+            createdById = createdById
         )
-            .andExpect(status().isOk)
-            .andReturn()
-            .let { objectMapper.readTree(it.response.contentAsString) }
+    }
 
-        val findWithIncorrectQueryResponse = mockMvc.perform(
-            get("/boardgames")
-                .param("query", "null")
-                .param("offset", "1")
-                .param("limit", "25")
+    private fun updateRequest(
+        displayName: String,
+        isCustom: Boolean,
+        createdById: Long? = null
+    ): UpdateBoardGameRequest {
+        return UpdateBoardGameRequest(
+            type = "BOARDGAME",
+            originalName = displayName,
+            displayName = displayName,
+            isCustom = isCustom,
+            tags = emptyList(),
+            createdById = createdById
         )
-            .andExpect(status().isOk)
-            .andReturn()
-            .let { objectMapper.readTree(it.response.contentAsString) }
-
-        assertFalse(findWithCorrectQueryResponse["data"].isEmpty)
-        assertTrue(findWithIncorrectQueryResponse["data"].isEmpty)
-        assertEquals(createResponse.id, findWithCorrectQueryResponse["data"][0]["id"].asLong())
     }
 
-    private fun createBoardGameAndDelete(createBoardGameRequest: CreateBoardGameRequest) {
-        val createResponse = createBoardGame(createBoardGameRequest)
-
-        mockMvc.perform(delete("/boardgames/${createResponse.id}"))
-            .andExpect(status().isNoContent)
-
-        val count = testJdbcBoardGameRepository.countAll()
-        assertEquals(0, count)
-    }
-
-    private fun createBoardGameAndUpdate(
-        createBoardGameRequest: CreateBoardGameRequest,
-        updateBoardGameRequest: UpdateBoardGameRequest
-    ) {
-        val createResponse = createBoardGame(createBoardGameRequest)
-
-        val id = createResponse.id
-        mockMvc.perform(
-            put("/boardgames/$id")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateBoardGameRequest))
+    private fun authenticate(userId: Long, role: String) {
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            CurrentUserPrincipal(
+                userId = userId,
+                email = "user-$userId@itis.com",
+                roles = listOf(role)
+            ),
+            null,
+            listOf(SimpleGrantedAuthority(role))
         )
-            .andExpect(status().isOk)
-
-        val displayName = testJdbcBoardGameRepository.findDisplayNameById(id)
-        assertEquals(updateBoardGameRequest.displayName, displayName)
     }
 
-
-    @ParameterizedTest
-    @MethodSource("getCreatBoardGameRequest")
-    fun testCreateBoardGame(createBoardGameRequest: CreateBoardGameRequest) {
-        createBoardGameAndDirectCount(createBoardGameRequest)
+    private fun uniqueEmail(prefix: String): String {
+        return "$prefix-${System.nanoTime()}@itis.com"
     }
-
-    @ParameterizedTest
-    @MethodSource("getCreatBoardGameRequest")
-    fun testCreateBoardGameAndFind(createBoardGameRequest: CreateBoardGameRequest) {
-        createBoardGameAndFind(createBoardGameRequest)
-    }
-
-    @ParameterizedTest
-    @MethodSource("getCreatBoardGameRequest")
-    fun testCreateBoardGameAndDelete(createBoardGameRequest: CreateBoardGameRequest) {
-        createBoardGameAndDelete(createBoardGameRequest)
-    }
-
-    @ParameterizedTest
-    @MethodSource("getCreatBoardGameRequestAndUpdateBoardGameRequest")
-    fun testCreateBoardGameAndUpdate(
-        createBoardGameRequest: CreateBoardGameRequest,
-        updateBoardGameRequest: UpdateBoardGameRequest
-    ) {
-        createBoardGameAndUpdate(createBoardGameRequest, updateBoardGameRequest)
-    }
-
-
 }

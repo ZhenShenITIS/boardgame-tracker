@@ -1,0 +1,68 @@
+get:
+  summary: Получить список игровых сессий для элемента коллекции
+  tags: [ play-sessions ]
+  parameters:
+    - name: collectionItemId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        default: 25
+        minimum: 1
+        maximum: 100
+  responses:
+    200:
+      description: Список игровых сессий
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PlaySessionList.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'
+
+post:
+  summary: Создать игровую сессию для элемента коллекции
+  tags: [ play-sessions ]
+  parameters:
+    - name: collectionItemId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreatePlaySessionRequest.yaml'
+  responses:
+    201:
+      description: Игровая сессия создана
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PlaySession.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'

@@ -6,6 +6,7 @@ COPY gradle/ ./gradle/
 COPY build.gradle.kts ./build.gradle.kts
 COPY settings.gradle.kts ./settings.gradle.kts
 COPY src/main/resources ./src/main/resources
+COPY top10000.txt ./top10000.txt
 
 RUN --mount=type=cache,target=/home/gradle/.gradle \
     gradle dependencies --no-daemon

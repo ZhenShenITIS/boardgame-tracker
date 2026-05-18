@@ -57,3 +57,5 @@ post:
       $ref: '../components/responses/BadRequest.yaml'
     401:
       $ref: '../components/responses/UnauthorizedError.yaml'
+    403:
+      $ref: '../components/responses/Forbidden.yaml'

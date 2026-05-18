@@ -18,3 +18,10 @@ app:
       access-token-ttl-seconds: 3600
       refresh-token-ttl-seconds: 2592000
       secret: ${JWT_SECRET:change-me-please-change-me-please}
+api:
+  bgg:
+    token: ${BGG_API_TOKEN}
+    base-url: https://boardgamegeek.com/xmlapi2
+    request-timeout-seconds: 30
+    min-delay-millis: 5000
+    retry-max-attempts: 5

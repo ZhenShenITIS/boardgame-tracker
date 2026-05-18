@@ -1,0 +1,60 @@
+get:
+  summary: Получить элементы коллекции пользователя
+  tags: [ collection-items ]
+  parameters:
+    - name: status
+      in: query
+      schema:
+        $ref: '../components/schemas/CollectionItemStatus.yaml'
+    - name: shelfOfShame
+      in: query
+      schema:
+        type: boolean
+      description: Возвращать только записи с playCount = 0
+    - name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        default: 25
+        maximum: 100
+        minimum: 1
+  responses:
+    200:
+      description: Список элементов коллекции
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CollectionItemList.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+
+post:
+  summary: Добавить игру в коллекцию пользователя
+  tags: [ collection-items ]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreateCollectionItemRequest.yaml'
+  responses:
+    201:
+      description: Элемент коллекции создан
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CollectionItem.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'
+    404:
+      $ref: '../components/responses/NotFound.yaml'

@@ -1,0 +1,45 @@
+type: object
+required: [originalName, displayName]
+properties:
+  originalName:
+    $ref: "../fields/OriginalName.yaml"
+  displayName:
+    $ref: "../fields/DisplayName.yaml"
+  minPlayers:
+    $ref: "../fields/MinPlayers.yaml"
+  maxPlayers:
+    $ref: "../fields/MaxPlayers.yaml"
+  playingTime:
+    $ref: "../fields/PlayingTime.yaml"
+  minPlayTime:
+    $ref: "../fields/MinPlayTime.yaml"
+  maxPlayTime:
+    $ref: "../fields/MaxPlayTime.yaml"
+  minAge:
+    $ref: "../fields/MinAge.yaml"
+  yearPublished:
+    $ref: "../fields/YearPublished.yaml"
+  datePurchased:
+    type: string
+    format: date
+    nullable: true
+    example: "2026-05-17"
+  sumInRubles:
+    type: number
+    nullable: true
+    minimum: 0
+    example: 4990.00
+  status:
+    allOf:
+      - $ref: "./CollectionItemStatus.yaml"
+    default: IN_COLLECTION
+  comment:
+    type: string
+    nullable: true
+    maxLength: 2000
+    example: "Самиздат, куплен на фестивале"
+  tags:
+    type: array
+    items:
+      $ref: "./Tag.yaml"
+    default: []

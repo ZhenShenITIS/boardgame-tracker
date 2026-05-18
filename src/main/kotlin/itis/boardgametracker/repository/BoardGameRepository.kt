@@ -30,13 +30,31 @@ class BoardGameRepository(
             min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
             bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
     """.trimIndent()
-
+    private val insertImportedIgnoringDuplicatesSql: String = """
+        INSERT INTO board_games (
+            bgg_id, type, original_name, display_name, complexity, min_players, max_players, playing_time,
+            min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
+            bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
+        ) VALUES (
+            :bggId, :type, :originalName, :displayName, :complexity, :minPlayers, :maxPlayers,
+            :playingTime, :minPlayTime, :maxPlayTime, :minAge, :yearPublished,
+            :s3ImageKey, :s3PreviewKey, :bggImageUrl, :bggPreviewUrl,
+            :isCustom, :createdById, :createdAt, :updatedAt
+        )
+        ON CONFLICT (bgg_id) DO NOTHING
+    """.trimIndent()
+    private val findBoardGameIdByBggIdSql: String = """
+        SELECT id
+        FROM board_games
+        WHERE bgg_id = :bggId
+    """.trimIndent()
     private val findBoardGamesByQueryAndUserIdWithLimitOffsetSql: String = """
         SELECT id, bgg_id, type, original_name, display_name, complexity, min_players, max_players, playing_time,
             min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
             bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
             FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR created_by = :userId)
+            WHERE display_name % :query
+                AND (:includeAllCustomGames = TRUE OR is_custom = FALSE OR created_by = :userId)
             ORDER BY similarity(display_name, :query) DESC, display_name ASC
             LIMIT :limit
             OFFSET :offset
@@ -88,7 +106,8 @@ class BoardGameRepository(
     private val countFindBoardGamesByQueryAndUserIdWithLimitOffsetSql: String = """
         SELECT COUNT(*)
             FROM board_games
-            WHERE display_name % :query AND (is_custom = FALSE OR created_by = :userId)
+            WHERE display_name % :query
+                AND (:includeAllCustomGames = TRUE OR is_custom = FALSE OR created_by = :userId)
     """.trimIndent()
 
     private val findBoardGamesByUserIdWithLimitOffsetSql: String = """
@@ -96,7 +115,7 @@ class BoardGameRepository(
             min_play_time, max_play_time, min_age, year_published, s3_image_key, s3_preview_key,
             bgg_image_url, bgg_preview_url, is_custom, created_by, created_at, updated_at
             FROM board_games
-            WHERE is_custom = FALSE OR (is_custom = TRUE AND created_by = :userId)
+            WHERE :includeAllCustomGames = TRUE OR is_custom = FALSE OR (is_custom = TRUE AND created_by = :userId)
             LIMIT :limit
             OFFSET :offset
     """.trimIndent()
@@ -104,7 +123,7 @@ class BoardGameRepository(
     private val countFindBoardGamesByUserIdWithLimitOffsetSql: String = """
         SELECT COUNT (*)
         FROM board_games
-        WHERE is_custom = FALSE OR (is_custom = TRUE AND created_by = :userId)
+        WHERE :includeAllCustomGames = TRUE OR is_custom = FALSE OR (is_custom = TRUE AND created_by = :userId)
     """.trimIndent()
 
     private val upsertTag: String = """
@@ -189,7 +208,13 @@ class BoardGameRepository(
         }
     }
 
-    fun findByQueryAndUserIdWithLimitOffset(userId: Long, query: String?, limit: Int, offset: Int): List<BoardGame> {
+    fun findByQueryAndUserIdWithLimitOffset(
+        userId: Long,
+        query: String?,
+        limit: Int,
+        offset: Int,
+        includeAllCustomGames: Boolean
+    ): List<BoardGame> {
         if (query != null) {
             val boardGames = namedParameterJdbcTemplate.query(
                 findBoardGamesByQueryAndUserIdWithLimitOffsetSql,
@@ -197,6 +222,7 @@ class BoardGameRepository(
                     .addValue("userId", userId)
                     .addValue("limit", limit)
                     .addValue("offset", offset)
+                    .addValue("includeAllCustomGames", includeAllCustomGames)
                     .addValue("query", query),
                 BoardGameRowMapper
             )
@@ -208,6 +234,7 @@ class BoardGameRepository(
             MapSqlParameterSource()
                 .addValue("userId", userId)
                 .addValue("limit", limit)
+                .addValue("includeAllCustomGames", includeAllCustomGames)
                 .addValue("offset", offset),
             BoardGameRowMapper
         )
@@ -216,13 +243,14 @@ class BoardGameRepository(
     }
 
 
-    fun countFindByQueryAndUserId(userId: Long, query: String?): Int {
+    fun countFindByQueryAndUserId(userId: Long, query: String?, includeAllCustomGames: Boolean): Int {
         if (query != null) {
             return namedParameterJdbcTemplate.queryForObject(
                 countFindBoardGamesByQueryAndUserIdWithLimitOffsetSql,
 
                 MapSqlParameterSource()
                     .addValue("userId", userId)
+                    .addValue("includeAllCustomGames", includeAllCustomGames)
                     .addValue("query", query),
 
                 Int::class.java
@@ -233,16 +261,17 @@ class BoardGameRepository(
             countFindBoardGamesByUserIdWithLimitOffsetSql,
 
             MapSqlParameterSource()
-                .addValue("userId", userId),
+                .addValue("userId", userId)
+                .addValue("includeAllCustomGames", includeAllCustomGames),
 
 
             Int::class.java
-        ) ?: 0;
+        ) ?: 0
     }
 
 
-    fun deleteById(id: Long) {
-        namedParameterJdbcTemplate.update(
+    fun deleteById(id: Long): Int {
+        return namedParameterJdbcTemplate.update(
             deleteById,
             MapSqlParameterSource()
                 .addValue("id", id)
@@ -259,7 +288,6 @@ class BoardGameRepository(
         return enrichWithTags(listOf(boardGame)).first()
     }
 
-
     fun update(boardGame: BoardGame): BoardGame {
         val boardGame =
             namedParameterJdbcTemplate.queryForObject(
@@ -273,6 +301,23 @@ class BoardGameRepository(
         deleteTagsRelationsByBoardGameId(boardGameId)
         val tags = upsertTags(boardGame.tags, boardGameId)
         return boardGame.copy(tags = tags)
+    }
+
+    fun createImportedIgnoringDuplicates(boardGame: BoardGame): Boolean {
+        val bggId = boardGame.bggId ?: return false
+        val updatedRows = namedParameterJdbcTemplate.update(
+            insertImportedIgnoringDuplicatesSql,
+            map(boardGame)
+        )
+
+        val boardGameId = namedParameterJdbcTemplate.queryForObject(
+            findBoardGameIdByBggIdSql,
+            MapSqlParameterSource().addValue("bggId", bggId),
+            Long::class.java
+        ) ?: throw IllegalStateException("Board game with bggId=$bggId was not found after import upsert")
+
+        upsertTags(boardGame.tags, boardGameId)
+        return updatedRows > 0
     }
 
 

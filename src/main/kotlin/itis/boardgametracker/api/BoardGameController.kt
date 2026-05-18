@@ -24,10 +24,10 @@ class BoardGameController(
         page: Int,
         limit: Int
     ): ResponseEntity<BoardGameList> {
-        val userId = currentUserProvider.currentUserId()
+        val currentUser = currentUserProvider.currentUser()
 
         log.atInfo()
-            .addKeyValue("userId", userId)
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("query", query)
             .addKeyValue("page", page)
             .addKeyValue("limit", limit)
@@ -37,11 +37,11 @@ class BoardGameController(
             query = query,
             page = page,
             limit = limit,
-            userId = userId
+            currentUser = currentUser
         )
 
         log.atInfo()
-            .addKeyValue("userId", userId)
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("fetchedCount", boardGameList.data.size)
             .addKeyValue("totalPages", boardGameList.pagination.totalPages)
             .log("Получен ответ на запрос получения списка настольных игр")
@@ -49,26 +49,34 @@ class BoardGameController(
     }
 
     override fun boardgamesIdDelete(id: Long): ResponseEntity<Unit> {
+        val currentUser = currentUserProvider.currentUser()
+
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", id)
             .log("Пришёл запрос на удаление настольной игры")
 
-        boardGameService.deleteBoardGameById(id)
+        boardGameService.deleteBoardGameById(id, currentUser)
 
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", id)
             .log("Настольная игра удалена")
         return ResponseEntity.noContent().build()
     }
 
     override fun boardgamesIdGet(id: Long): ResponseEntity<BoardGame> {
+        val currentUser = currentUserProvider.currentUser()
+
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", id)
             .log("Пришёл запрос на получение настольной игры по id")
 
-        val boardGame = boardGameService.getBoardGameById(id)
+        val boardGame = boardGameService.getBoardGameById(id, currentUser)
 
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", id)
             .log("Получен ответ на запрос настольной игры по id")
         return ResponseEntity.ok(boardGame)
@@ -78,25 +86,33 @@ class BoardGameController(
         id: Long,
         updateBoardGameRequest: UpdateBoardGameRequest
     ): ResponseEntity<BoardGame> {
+        val currentUser = currentUserProvider.currentUser()
+
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", id)
             .log("Пришёл запрос на обновление настольной игры")
 
-        val updatedBoardGame = boardGameService.updateBoardGameById(id, updateBoardGameRequest)
+        val updatedBoardGame = boardGameService.updateBoardGameById(id, updateBoardGameRequest, currentUser)
 
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", id)
             .log("Настольная игра обновлена")
         return ResponseEntity.ok(updatedBoardGame)
     }
 
     override fun boardgamesPost(createBoardGameRequest: CreateBoardGameRequest): ResponseEntity<BoardGame> {
+        val currentUser = currentUserProvider.currentUser()
+
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .log("Пришёл запрос на создание настольной игры")
 
-        val createdBoardGame = boardGameService.createBoardGame(createBoardGameRequest)
+        val createdBoardGame = boardGameService.createBoardGame(createBoardGameRequest, currentUser)
 
         log.atInfo()
+            .addKeyValue("userId", currentUser.userId)
             .addKeyValue("boardGameId", createdBoardGame.id)
             .log("Настольная игра создана")
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBoardGame)

@@ -1,15 +1,15 @@
 get:
-  summary: Получить информацию о настольной игре
-  tags: [ boardgames ]
+  summary: Получить элемент коллекции пользователя
+  tags: [ collection-items ]
   parameters:
     - $ref: "../components/parameters/intIdInPath.yaml"
   responses:
     200:
-      description: Информация о настольной игре
+      description: Элемент коллекции
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/BoardGame.yaml'
+            $ref: '../components/schemas/CollectionItem.yaml'
     400:
       $ref: '../components/responses/BadRequest.yaml'
     401:
@@ -17,50 +17,42 @@ get:
     404:
       $ref: '../components/responses/NotFound.yaml'
 
-
 put:
-  summary: Обновить информацию о настольной игре
-  tags: [ boardgames ]
+  summary: Обновить элемент коллекции пользователя
+  tags: [ collection-items ]
   parameters:
     - $ref: "../components/parameters/intIdInPath.yaml"
-
   requestBody:
     required: true
     content:
       application/json:
         schema:
-          $ref: '../components/schemas/UpdateBoardGameRequest.yaml'
+          $ref: '../components/schemas/UpdateCollectionItemRequest.yaml'
   responses:
     200:
-      description: Успешное обновление настольной игры
+      description: Элемент коллекции обновлен
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/BoardGame.yaml'
+            $ref: '../components/schemas/CollectionItem.yaml'
     400:
       $ref: '../components/responses/BadRequest.yaml'
     401:
       $ref: '../components/responses/UnauthorizedError.yaml'
-    403:
-      $ref: '../components/responses/Forbidden.yaml'
     404:
       $ref: '../components/responses/NotFound.yaml'
 
 delete:
-  summary: Удалить информацию о настольной игре
-  tags: [ boardgames ]
+  summary: Удалить элемент коллекции пользователя
+  tags: [ collection-items ]
   parameters:
     - $ref: "../components/parameters/intIdInPath.yaml"
   responses:
     204:
-      description: Успешное удаление настольной игры
+      description: Элемент коллекции удалён
     400:
       $ref: '../components/responses/BadRequest.yaml'
     401:
       $ref: '../components/responses/UnauthorizedError.yaml'
-    403:
-      $ref: '../components/responses/Forbidden.yaml'
     404:
       $ref: '../components/responses/NotFound.yaml'
-    409:
-      $ref: '../components/responses/Conflict.yaml'

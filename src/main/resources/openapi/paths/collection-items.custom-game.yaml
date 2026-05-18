@@ -1,0 +1,20 @@
+post:
+  summary: Добавить кастомную игру в коллекцию пользователя
+  tags: [ collection-items ]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreateCustomGameCollectionItemRequest.yaml'
+  responses:
+    201:
+      description: Элемент коллекции создан
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CollectionItem.yaml'
+    400:
+      $ref: '../components/responses/BadRequest.yaml'
+    401:
+      $ref: '../components/responses/UnauthorizedError.yaml'

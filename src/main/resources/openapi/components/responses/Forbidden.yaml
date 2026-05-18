@@ -1,0 +1,9 @@
+description: Доступ запрещён
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error:
+        code: "FORBIDDEN"
+        message: "Доступ запрещён"

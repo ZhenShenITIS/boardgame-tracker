@@ -18,3 +18,10 @@ app:
       access-token-ttl-seconds: 3600
       refresh-token-ttl-seconds: 2592000
       secret: test-secret-test-secret-test-secret
+api:
+  bgg:
+    token: test-token
+    base-url: https://boardgamegeek.com/xmlapi2
+    request-timeout-seconds: 30
+    min-delay-millis: 1
+    retry-max-attempts: 1

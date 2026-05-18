@@ -1,0 +1,6 @@
+type: string
+enum:
+  - IN_COLLECTION
+  - WISH_LIST
+  - SOLD
+example: IN_COLLECTION
