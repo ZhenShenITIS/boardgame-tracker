@@ -12,6 +12,9 @@ spring:
 s3:
   base-s3-url: ""
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
   security:
     jwt:
       issuer: boardgame-tracker
