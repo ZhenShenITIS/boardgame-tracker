@@ -14,6 +14,7 @@ export type PostCollectionItemsBody = {
   datePurchased?: string | null;
   /**
    * @minimum 0
+   * @maximum 99999999.99
    * @nullable
    */
   sumInRubles?: number | null;

@@ -12,12 +12,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ShelfOfShameStatsIntegrationTest : IntegrationTest() {
 
@@ -45,6 +48,45 @@ class ShelfOfShameStatsIntegrationTest : IntegrationTest() {
         assertEquals(0, stats["unplayedItems"].asInt())
         assertDecimalEquals("0", stats["shelfOfShameCost"])
         assertDecimalEquals("0", stats["playedPercent"])
+    }
+
+    @Test
+    fun firstStatsRequestStoresValueInRedisCache() {
+        testJdbcBoardGameRepository.createCollectionItem(
+            userId = userId,
+            boardGameId = boardGameId,
+            status = "IN_COLLECTION",
+            sumInRubles = BigDecimal("1000.00")
+        )
+
+        getStats()
+
+        assertTrue(redisTemplate.hasKey(cacheKey(userId)))
+    }
+
+    @Test
+    fun repeatedStatsRequestUsesCachedValue() {
+        testJdbcBoardGameRepository.createCollectionItem(
+            userId = userId,
+            boardGameId = boardGameId,
+            status = "IN_COLLECTION",
+            sumInRubles = BigDecimal("1000.00")
+        )
+
+        val first = getStats()
+        assertEquals(1, first["totalItems"].asInt())
+        assertDecimalEquals("1000.00", first["shelfOfShameCost"])
+
+        testJdbcBoardGameRepository.createCollectionItem(
+            userId = userId,
+            boardGameId = boardGameId,
+            status = "IN_COLLECTION",
+            sumInRubles = BigDecimal("2000.00")
+        )
+
+        val second = getStats()
+        assertEquals(1, second["totalItems"].asInt())
+        assertDecimalEquals("1000.00", second["shelfOfShameCost"])
     }
 
     @Test
@@ -195,6 +237,115 @@ class ShelfOfShameStatsIntegrationTest : IntegrationTest() {
         assertDecimalEquals("100.00", after["playedPercent"])
     }
 
+    @Test
+    fun statsCacheInvalidatesAfterCollectionItemCreateUpdateDeleteAndCustomCreate() {
+        val empty = getStats()
+        assertEquals(0, empty["totalItems"].asInt())
+
+        mockMvc.perform(
+            post("/collection-items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "boardGameId": $boardGameId,
+                      "status": "IN_COLLECTION",
+                      "sumInRubles": 1200,
+                      "comment": "created"
+                    }
+                    """.trimIndent()
+                )
+        ).andExpect(status().isCreated)
+
+        val afterCreate = getStats()
+        assertEquals(1, afterCreate["totalItems"].asInt())
+        assertDecimalEquals("1200", afterCreate["shelfOfShameCost"])
+
+        val createdItemId = testJdbcBoardGameRepository.findLatestCollectionItemIdByUser(userId)
+
+        mockMvc.perform(
+            put("/collection-items/$createdItemId")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "boardGameId": $boardGameId,
+                      "status": "IN_COLLECTION",
+                      "sumInRubles": 1500,
+                      "comment": "updated"
+                    }
+                    """.trimIndent()
+                )
+        ).andExpect(status().isOk)
+
+        val afterUpdate = getStats()
+        assertEquals(1, afterUpdate["totalItems"].asInt())
+        assertDecimalEquals("1500", afterUpdate["shelfOfShameCost"])
+
+        mockMvc.perform(delete("/collection-items/$createdItemId"))
+            .andExpect(status().isNoContent)
+
+        val afterDelete = getStats()
+        assertEquals(0, afterDelete["totalItems"].asInt())
+        assertDecimalEquals("0", afterDelete["shelfOfShameCost"])
+
+        mockMvc.perform(
+            post("/collection-items/custom-game")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "originalName": "Custom Quest",
+                      "displayName": "Custom Quest",
+                      "status": "IN_COLLECTION",
+                      "sumInRubles": 2200
+                    }
+                    """.trimIndent()
+                )
+        ).andExpect(status().isCreated)
+
+        val afterCustomGameCreate = getStats()
+        assertEquals(1, afterCustomGameCreate["totalItems"].asInt())
+        assertDecimalEquals("2200", afterCustomGameCreate["shelfOfShameCost"])
+    }
+
+    @Test
+    fun userStatsCacheIsIsolatedPerUser() {
+        testJdbcBoardGameRepository.createCollectionItem(
+            userId = userId,
+            boardGameId = boardGameId,
+            status = "IN_COLLECTION",
+            sumInRubles = BigDecimal("100.00")
+        )
+
+        val firstUserStats = getStats()
+        assertEquals(1, firstUserStats["totalItems"].asInt())
+        assertDecimalEquals("100.00", firstUserStats["shelfOfShameCost"])
+
+        authenticate(otherUserId, "ROLE_USER")
+        testJdbcBoardGameRepository.createCollectionItem(
+            userId = otherUserId,
+            boardGameId = boardGameId,
+            status = "IN_COLLECTION",
+            sumInRubles = BigDecimal("500.00")
+        )
+        testJdbcBoardGameRepository.createCollectionItem(
+            userId = otherUserId,
+            boardGameId = boardGameId,
+            status = "IN_COLLECTION",
+            sumInRubles = BigDecimal("700.00")
+        )
+
+        val secondUserStats = getStats()
+        assertEquals(2, secondUserStats["totalItems"].asInt())
+        assertDecimalEquals("1200.00", secondUserStats["shelfOfShameCost"])
+
+        authenticate(userId, "ROLE_USER")
+        val firstUserStatsAgain = getStats()
+        assertEquals(1, firstUserStatsAgain["totalItems"].asInt())
+        assertDecimalEquals("100.00", firstUserStatsAgain["shelfOfShameCost"])
+    }
+
     private fun getStats(): JsonNode {
         return mockMvc.perform(get("/me/stats"))
             .andExpect(status().isOk)
@@ -235,5 +386,9 @@ class ShelfOfShameStatsIntegrationTest : IntegrationTest() {
 
     private fun uniqueEmail(prefix: String): String {
         return "$prefix-${System.nanoTime()}@itis.com"
+    }
+
+    private fun cacheKey(userId: Long): String {
+        return "userCollectionStats::$userId"
     }
 }

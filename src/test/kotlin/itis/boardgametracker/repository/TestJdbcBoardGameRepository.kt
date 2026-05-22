@@ -156,6 +156,20 @@ class TestJdbcBoardGameRepository(
         )
     }
 
+    fun findLatestCollectionItemIdByUser(userId: Long): Long {
+        return namedParameterJdbcTemplate.queryForObject(
+            """
+            SELECT id
+            FROM collection_items
+            WHERE user_id = :userId
+            ORDER BY id DESC
+            LIMIT 1
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("userId", userId),
+            Long::class.java
+        ) ?: throw IllegalStateException()
+    }
+
     fun collectionItemExists(id: Long): Boolean {
         return (namedParameterJdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM collection_items WHERE id = :id",

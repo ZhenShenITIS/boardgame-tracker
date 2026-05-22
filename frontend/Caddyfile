@@ -1,0 +1,19 @@
+{
+	email admin@crumpapp.xyz
+}
+
+boardgames.crumpapp.xyz {
+	encode zstd gzip
+
+	@api path /admin/* /auth /auth/* /boardgames /boardgames/* /collection-items /collection-items/* /me/* /play-sessions/* /recommendations/* /actuator/* /v3/api-docs/* /swagger-ui/*
+
+	handle @api {
+		reverse_proxy app:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

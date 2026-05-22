@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 
 import { useGetRecommendationsTonight } from '../shared/api/generated/recommendations/recommendations';
+import { API_INT32_MAX } from '../shared/api/numericLimits';
 import { BoardGameImage } from '../shared/ui/BoardGameImage';
 import { formatCollectionStatus } from '../shared/ui/collectionStatus';
 import { EmptyState } from '../shared/ui/EmptyState';
@@ -95,8 +96,9 @@ export function RecommendationsPage() {
   const [limit, setLimit] = useState<number | ''>(10);
   const [shelfOnly, setShelfOnly] = useState('false');
 
-  const validPlayerCount = typeof playerCount === 'number' && playerCount >= 1;
-  const validMaxPlayTime = typeof maxPlayTimeMinutes === 'number' && maxPlayTimeMinutes >= 1;
+  const validPlayerCount = typeof playerCount === 'number' && playerCount >= 1 && playerCount <= API_INT32_MAX;
+  const validMaxPlayTime =
+    typeof maxPlayTimeMinutes === 'number' && maxPlayTimeMinutes >= 1 && maxPlayTimeMinutes <= API_INT32_MAX;
   const validLimit = typeof limit === 'number' && limit >= 1;
 
   const queryParams = useMemo(
@@ -131,6 +133,7 @@ export function RecommendationsPage() {
               label="Игроки"
               value={playerCount}
               min={1}
+              max={API_INT32_MAX}
               clampBehavior="strict"
               allowDecimal={false}
               onChange={(value) => setPlayerCount(toNumberOrEmpty(value))}
@@ -140,6 +143,7 @@ export function RecommendationsPage() {
               label="Макс. время партии (мин)"
               value={maxPlayTimeMinutes}
               min={1}
+              max={API_INT32_MAX}
               clampBehavior="strict"
               allowDecimal={false}
               onChange={(value) => setMaxPlayTimeMinutes(toNumberOrEmpty(value))}

@@ -1,0 +1,2 @@
+export const API_INT32_MAX = 2_147_483_647;
+export const COLLECTION_SUM_IN_RUBLES_MAX = 99_999_999.99;

@@ -21,6 +21,8 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.http.converter.HttpMessageNotReadableException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -151,7 +153,13 @@ class GlobalExceptionHandler {
             )
     }
 
-    @ExceptionHandler(BadRequestException::class, MethodArgumentNotValidException::class, ConstraintViolationException::class)
+    @ExceptionHandler(
+        BadRequestException::class,
+        MethodArgumentNotValidException::class,
+        ConstraintViolationException::class,
+        HttpMessageNotReadableException::class,
+        MethodArgumentTypeMismatchException::class
+    )
     fun handleBadRequestException(exception: Exception): ResponseEntity<Error> {
         log.atWarn().log("Невалидный запрос")
         val message = when (exception) {

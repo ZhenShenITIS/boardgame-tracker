@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { usePostCollectionItemsCustomGame } from '../shared/api/generated/collection-items/collection-items';
+import { API_INT32_MAX, COLLECTION_SUM_IN_RUBLES_MAX } from '../shared/api/numericLimits';
 import type { PostCollectionItemsCustomGameBodyStatus } from '../shared/api/generated/model';
 import { formatCollectionStatus } from '../shared/ui/collectionStatus';
 import { PageHeader } from '../shared/ui/PageHeader';
@@ -61,7 +62,7 @@ function asOptionalPositiveInteger(value: string) {
 
   const parsed = Number(value);
 
-  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed <= 0) {
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed <= 0 || parsed > API_INT32_MAX) {
     return Number.NaN;
   }
 
@@ -185,8 +186,11 @@ export function CollectionCustomGamePage() {
 
     const sumInRubles = asOptionalNumber(form.sumInRubles);
 
-    if (Number.isNaN(sumInRubles) || (typeof sumInRubles === 'number' && sumInRubles < 0)) {
-      errors.sumInRubles = 'Стоимость должна быть больше или равна 0';
+    if (
+      Number.isNaN(sumInRubles) ||
+      (typeof sumInRubles === 'number' && (sumInRubles < 0 || sumInRubles > COLLECTION_SUM_IN_RUBLES_MAX))
+    ) {
+      errors.sumInRubles = 'Стоимость должна быть от 0 до 99 999 999,99';
     }
 
     if (form.comment.length > 2000) {
@@ -296,6 +300,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Мин. игроков"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.minPlayers}
                 onChange={(event) => updateField('minPlayers', event.currentTarget.value)}
                 error={fieldErrors.minPlayers}
@@ -304,6 +310,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Макс. игроков"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.maxPlayers}
                 onChange={(event) => updateField('maxPlayers', event.currentTarget.value)}
                 error={fieldErrors.maxPlayers}
@@ -312,6 +320,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Время партии (мин)"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.playingTime}
                 onChange={(event) => updateField('playingTime', event.currentTarget.value)}
                 error={fieldErrors.playingTime}
@@ -320,6 +330,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Мин. время партии (мин)"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.minPlayTime}
                 onChange={(event) => updateField('minPlayTime', event.currentTarget.value)}
                 error={fieldErrors.minPlayTime}
@@ -328,6 +340,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Макс. время партии (мин)"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.maxPlayTime}
                 onChange={(event) => updateField('maxPlayTime', event.currentTarget.value)}
                 error={fieldErrors.maxPlayTime}
@@ -336,6 +350,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Мин. возраст"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.minAge}
                 onChange={(event) => updateField('minAge', event.currentTarget.value)}
                 error={fieldErrors.minAge}
@@ -344,6 +360,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Год издания"
                 type="number"
+                min={1}
+                max={API_INT32_MAX}
                 value={form.yearPublished}
                 onChange={(event) => updateField('yearPublished', event.currentTarget.value)}
                 error={fieldErrors.yearPublished}
@@ -366,6 +384,8 @@ export function CollectionCustomGamePage() {
               <TextInput
                 label="Стоимость в рублях"
                 type="number"
+                min={0}
+                max={COLLECTION_SUM_IN_RUBLES_MAX}
                 value={form.sumInRubles}
                 onChange={(event) => updateField('sumInRubles', event.currentTarget.value)}
                 error={fieldErrors.sumInRubles}

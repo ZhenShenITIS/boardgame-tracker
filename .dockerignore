@@ -1,0 +1,16 @@
+.git
+.gradle
+.idea
+build
+out
+dist
+.env
+.env.*
+frontend/node_modules
+frontend/dist
+frontend/.orval
+frontend/.env.local
+*.iml
+*.iws
+.DS_Store
+

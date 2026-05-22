@@ -6,6 +6,7 @@ import itis.boardgametracker.api.dto.Pagination
 import itis.boardgametracker.api.dto.PlaySessionList
 import itis.boardgametracker.api.dto.QuickPlaySessionRequest
 import itis.boardgametracker.api.dto.UpdatePlaySessionRequest
+import itis.boardgametracker.config.CacheCatalog
 import itis.boardgametracker.exception.BadRequestException
 import itis.boardgametracker.exception.NotFoundException
 import itis.boardgametracker.mapper.PlaySessionMapper
@@ -13,6 +14,7 @@ import itis.boardgametracker.repository.CollectionItemRepository
 import itis.boardgametracker.repository.PlaySessionRepository
 import itis.boardgametracker.security.CurrentUserPrincipal
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -86,6 +88,7 @@ class PlaySessionService(
 
     @Transactional
     @Timed(value = MetricsCatalog.PLAY_SESSION_CREATE_TIME, description = "Время создания игровой сессии")
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun createPlaySession(
         collectionItemId: Long,
         createPlaySessionRequest: CreatePlaySessionRequest,
@@ -117,6 +120,7 @@ class PlaySessionService(
 
     @Transactional
     @Timed(value = MetricsCatalog.PLAY_SESSION_QUICK_CREATE_TIME, description = "Время быстрого создания игровой сессии")
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun quickCreatePlaySession(
         collectionItemId: Long,
         quickPlaySessionRequest: QuickPlaySessionRequest?,
@@ -171,6 +175,7 @@ class PlaySessionService(
 
     @Transactional
     @Timed(value = MetricsCatalog.PLAY_SESSION_DELETE_TIME, description = "Время удаления игровой сессии")
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun deletePlaySessionById(id: Long, currentUser: CurrentUserPrincipal) {
         val deletedRows = playSessionRepository.deleteByIdAndUserId(id, currentUser.userId)
         if (deletedRows == 0) {

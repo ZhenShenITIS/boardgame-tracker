@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -66,6 +67,15 @@ class CollectionItemControllerTest {
     }
 
     @Test
+    fun pageOverflowReturns400() {
+        mockMvc.perform(
+            get("/collection-items")
+                .param("page", "2147483648")
+        ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+    }
+
+    @Test
     fun postWithNegativeSumReturns400() {
         val payload = CreateCollectionItemRequest(
             boardGameId = 1L,
@@ -77,5 +87,38 @@ class CollectionItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload))
         ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun postWithOversizedSumReturns400() {
+        val payload = CreateCollectionItemRequest(
+            boardGameId = 1L,
+            sumInRubles = BigDecimal("100000000")
+        )
+
+        mockMvc.perform(
+            post("/collection-items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload))
+        ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+    }
+
+    @Test
+    fun customGameIntegerOverflowReturns400() {
+        mockMvc.perform(
+            post("/collection-items/custom-game")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "originalName": "Oversized players",
+                      "displayName": "Oversized players",
+                      "minPlayers": 2147483648
+                    }
+                    """.trimIndent()
+                )
+        ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
     }
 }

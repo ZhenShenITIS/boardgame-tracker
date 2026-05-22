@@ -9,6 +9,7 @@ import itis.boardgametracker.api.dto.Pagination
 import itis.boardgametracker.api.dto.ShelfOfShameList
 import itis.boardgametracker.api.dto.UpdateCollectionItemRequest
 import itis.boardgametracker.api.dto.UserCollectionStats
+import itis.boardgametracker.config.CacheCatalog
 import itis.boardgametracker.constant.BoardGameType
 import itis.boardgametracker.exception.NotFoundException
 import itis.boardgametracker.mapper.BoardGameMapper
@@ -18,6 +19,8 @@ import itis.boardgametracker.repository.BoardGameRepository
 import itis.boardgametracker.repository.CollectionItemRepository
 import itis.boardgametracker.security.CurrentUserPrincipal
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -133,6 +136,7 @@ class CollectionItemService(
     }
 
     @Timed(value = MetricsCatalog.USER_COLLECTION_STATS_GET_TIME, description = "Время получения статистики коллекции пользователя")
+    @Cacheable(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun getUserCollectionStats(currentUser: CurrentUserPrincipal): UserCollectionStats {
         val stats = collectionItemRepository.getUserCollectionStats(currentUser.userId)
         val playedPercent = if (stats.totalItems == 0) {
@@ -172,6 +176,7 @@ class CollectionItemService(
 
     @Transactional
     @Timed(value = MetricsCatalog.COLLECTION_ITEM_CREATE_TIME, description = "Время создания элемента коллекции")
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun createCollectionItem(
         createCollectionItemRequest: CreateCollectionItemRequest,
         currentUser: CurrentUserPrincipal
@@ -204,6 +209,7 @@ class CollectionItemService(
         value = MetricsCatalog.COLLECTION_ITEM_CREATE_WITH_CUSTOM_GAME_TIME,
         description = "Время создания элемента коллекции с кастомной игрой"
     )
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun createCollectionItemWithCustomGame(
         createCustomGameCollectionItemRequest: CreateCustomGameCollectionItemRequest,
         currentUser: CurrentUserPrincipal
@@ -250,6 +256,7 @@ class CollectionItemService(
 
     @Transactional
     @Timed(value = MetricsCatalog.COLLECTION_ITEM_UPDATE_TIME, description = "Время обновления элемента коллекции")
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun updateCollectionItemById(
         id: Long,
         updateCollectionItemRequest: UpdateCollectionItemRequest,
@@ -282,6 +289,7 @@ class CollectionItemService(
 
     @Transactional
     @Timed(value = MetricsCatalog.COLLECTION_ITEM_DELETE_TIME, description = "Время удаления элемента коллекции")
+    @CacheEvict(cacheNames = [CacheCatalog.USER_COLLECTION_STATS], key = "#currentUser.userId")
     fun deleteCollectionItemById(
         id: Long,
         currentUser: CurrentUserPrincipal

@@ -23,6 +23,7 @@ import { Link } from 'react-router';
 import { useGetBoardgames } from '../shared/api/generated/boardgames/boardgames';
 import { usePostCollectionItems } from '../shared/api/generated/collection-items/collection-items';
 import type { GetBoardgames200DataItem, PostCollectionItemsBodyStatus } from '../shared/api/generated/model';
+import { COLLECTION_SUM_IN_RUBLES_MAX } from '../shared/api/numericLimits';
 import { BoardGameImage } from '../shared/ui/BoardGameImage';
 import { formatCollectionStatus } from '../shared/ui/collectionStatus';
 import { EmptyState } from '../shared/ui/EmptyState';
@@ -210,8 +211,8 @@ export function BoardgamesPage() {
     if (addForm.sumInRubles) {
       const value = Number(addForm.sumInRubles);
 
-      if (Number.isNaN(value) || value < 0) {
-        fieldErrors.sumInRubles = 'Сумма должна быть больше или равна 0';
+      if (Number.isNaN(value) || value < 0 || value > COLLECTION_SUM_IN_RUBLES_MAX) {
+        fieldErrors.sumInRubles = 'Сумма должна быть от 0 до 99 999 999,99';
       }
     }
 
@@ -405,6 +406,7 @@ export function BoardgamesPage() {
             <NumberInput
               label="Стоимость в рублях"
               min={0}
+              max={COLLECTION_SUM_IN_RUBLES_MAX}
               value={addForm.sumInRubles}
               onChange={(value) => {
                 setAddForm((prev) => ({ ...prev, sumInRubles: value === '' ? '' : String(value ?? '') }));

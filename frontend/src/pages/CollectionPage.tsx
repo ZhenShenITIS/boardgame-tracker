@@ -28,6 +28,7 @@ import type {
   PutCollectionItemsIdBodyStatus,
 } from '../shared/api/generated/model';
 import { usePostCollectionItemsCollectionItemIdPlaySessionsQuick } from '../shared/api/generated/play-sessions/play-sessions';
+import { COLLECTION_SUM_IN_RUBLES_MAX } from '../shared/api/numericLimits';
 import { BoardGameImage } from '../shared/ui/BoardGameImage';
 import { formatCollectionStatus } from '../shared/ui/collectionStatus';
 import { EmptyState } from '../shared/ui/EmptyState';
@@ -195,8 +196,8 @@ export function CollectionPage() {
     const errors: EditFieldErrors = {};
     const parsedCost = editForm.sumInRubles.trim() ? Number(editForm.sumInRubles) : null;
 
-    if (parsedCost !== null && (!Number.isFinite(parsedCost) || parsedCost < 0)) {
-      errors.sumInRubles = 'Стоимость должна быть больше или равна 0';
+    if (parsedCost !== null && (!Number.isFinite(parsedCost) || parsedCost < 0 || parsedCost > COLLECTION_SUM_IN_RUBLES_MAX)) {
+      errors.sumInRubles = 'Стоимость должна быть от 0 до 99 999 999,99';
     }
 
     if (editForm.comment.length > 2000) {
@@ -454,6 +455,8 @@ export function CollectionPage() {
             <TextInput
               type="number"
               label="Стоимость в рублях"
+              min={0}
+              max={COLLECTION_SUM_IN_RUBLES_MAX}
               value={editForm.sumInRubles}
               onChange={(event) => {
                 const { value } = event.currentTarget;

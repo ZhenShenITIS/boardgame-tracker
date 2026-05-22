@@ -49,6 +49,7 @@ class SecurityConfig(
             }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers(
+                    "/error",
                     "/auth/register",
                     "/auth/login",
                     "/auth/refresh"

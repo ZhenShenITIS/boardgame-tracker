@@ -2,10 +2,13 @@ package itis.boardgametracker.integration
 
 import itis.boardgametracker.api.dto.CollectionItem
 import itis.boardgametracker.api.dto.CollectionItemStatus
+import itis.boardgametracker.api.dto.CreateCustomGameCollectionItemRequest
 import itis.boardgametracker.security.CurrentUserPrincipal
+import itis.boardgametracker.service.CollectionItemService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -24,6 +27,9 @@ class CustomGameCollectionFlowIntegrationTest : IntegrationTest() {
 
     @Autowired
     lateinit var mockMvc: MockMvc
+
+    @Autowired
+    lateinit var collectionItemService: CollectionItemService
 
     private var userId: Long = 0
     private var otherUserId: Long = 0
@@ -91,21 +97,19 @@ class CustomGameCollectionFlowIntegrationTest : IntegrationTest() {
 
     @Test
     fun rollbackWorksIfCollectionItemCreationFails() {
-        assertFailsWith<jakarta.servlet.ServletException> {
-            mockMvc.perform(
-                post("/collection-items/custom-game")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        objectMapper.writeValueAsString(
-                            mapOf(
-                                "originalName" to "Rollback Game",
-                                "displayName" to "Rollback Game",
-                                "sumInRubles" to BigDecimal("1000000000.00")
-                            )
-                        )
-                    )
+        assertFailsWith<DataIntegrityViolationException> {
+            collectionItemService.createCollectionItemWithCustomGame(
+                createCustomGameCollectionItemRequest = CreateCustomGameCollectionItemRequest(
+                    originalName = "Rollback Game",
+                    displayName = "Rollback Game",
+                    sumInRubles = BigDecimal("1000000000.00")
+                ),
+                currentUser = CurrentUserPrincipal(
+                    userId = userId,
+                    email = "user-$userId@itis.com",
+                    roles = listOf("ROLE_USER")
+                )
             )
-                .andReturn()
         }
 
         assertEquals(0L, testJdbcBoardGameRepository.countAll())

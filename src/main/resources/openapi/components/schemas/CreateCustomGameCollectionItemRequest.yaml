@@ -28,6 +28,7 @@ properties:
     type: number
     nullable: true
     minimum: 0
+    maximum: 99999999.99
     example: 4990.00
   status:
     allOf:
