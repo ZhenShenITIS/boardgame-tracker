@@ -17,6 +17,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.mock.web.MockFilterChain
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
@@ -102,5 +103,17 @@ class JwtAuthenticationFilterTest {
             eq(response),
             any(AuthenticationException::class.java)
         )
+    }
+
+    @Test
+    fun invalidBearerTokenOnPublicAuthPathIsIgnored() {
+        val request = MockHttpServletRequest("POST", "/auth/login")
+        request.addHeader("Authorization", "Bearer invalid-token")
+        val response = MockHttpServletResponse()
+
+        filter.doFilter(request, response, MockFilterChain())
+
+        assertNull(SecurityContextHolder.getContext().authentication)
+        verifyNoInteractions(authenticationEntryPoint)
     }
 }

@@ -48,10 +48,20 @@ async function refreshAccessToken() {
   return refreshRequest;
 }
 
+function isPublicAuthUrl(url: string | undefined) {
+  if (!url) {
+    return false;
+  }
+
+  const pathname = new URL(url, 'http://boardgame-tracker.local').pathname;
+
+  return pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/auth/refresh';
+}
+
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
 
-  if (token) {
+  if (token && !isPublicAuthUrl(config.url)) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
@@ -68,7 +78,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (originalRequest.url?.includes('/auth/refresh')) {
+    if (isPublicAuthUrl(originalRequest.url)) {
       clearAuthTokens();
       notifyAuthSessionCleared();
       return Promise.reject(error);

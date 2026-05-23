@@ -22,6 +22,18 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        if (request.method.equals("OPTIONS", ignoreCase = true)) {
+            return true
+        }
+
+        val path = request.servletPath.ifBlank {
+            request.requestURI.removePrefix(request.contextPath)
+        }
+
+        return path in PUBLIC_PATHS
+    }
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -88,5 +100,11 @@ class JwtAuthenticationFilter(
         const val AUTHORIZATION_HEADER = "Authorization"
         const val BEARER_PREFIX = "Bearer "
         const val ROLE_PREFIX = "ROLE_"
+        val PUBLIC_PATHS = setOf(
+            "/error",
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh"
+        )
     }
 }
